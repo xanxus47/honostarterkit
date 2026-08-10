@@ -209,7 +209,7 @@ export async function generateOtafPdf(
   })
 
   drawHeader(page, fonts, logo, controlNumber, data.dateRequested)
-  let y = PAGE_H - 112
+  let y = PAGE_H - 124
   y = drawEmployeeSection(page, fonts, data, y)
   y = drawApprovalSection(page, fonts, data, y - 4)
   y = drawSignatureSection(page, fonts, data, y - 4, verificationUrl, verificationCode)
@@ -334,15 +334,15 @@ function drawHeader(
   drawUnderline(page, dateLineX, boxY + 5, boxW - 70)
   drawFieldValue(page, dateRequested, dateLineX + 2, boxY + 7, fonts.regular, 7, boxW - 74)
 
-  // Title
-  drawCentered(page, 'OVERTIME AUTHORIZATION FORM (OTAF)', PAGE_H - 102, fonts.bold, 13, TITLE_BLUE)
+  // Title + purpose (leave clear gap above EMPLOYEE INFORMATION bar)
+  drawCentered(page, 'OVERTIME AUTHORIZATION FORM (OTAF)', PAGE_H - 98, fonts.bold, 13, TITLE_BLUE)
   drawCentered(
     page,
     'Purpose: Official approval before rendering overtime.',
-    PAGE_H - 113,
+    PAGE_H - 111,
     fonts.italic,
-    7,
-    GRAY,
+    8,
+    BLACK,
   )
 }
 
