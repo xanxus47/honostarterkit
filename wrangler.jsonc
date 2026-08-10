@@ -2,7 +2,14 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "my-app",
   "main": "src/index.ts",
-  "compatibility_date": "2026-08-06"
+  "compatibility_date": "2026-08-06",
+  "rules": [
+    {
+      "type": "Data",
+      "globs": ["**/*.pdf", "**/*.png"],
+      "fallthrough": true
+    }
+  ]
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
