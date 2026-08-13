@@ -145,9 +145,10 @@ function drawCell(
   const labelSize = 6.5
   const labelW = fonts.bold.widthOfTextAtSize(label, labelSize)
   const labelX = opts?.centerLabel ? x + (w - labelW) / 2 : x + 4
+  // Label near top of cell
   page.drawText(label, {
     x: labelX,
-    y: y + h - 10,
+    y: y + h - 9,
     size: labelSize,
     font: fonts.bold,
     color: NAVY,
@@ -162,9 +163,10 @@ function drawCell(
       }
       text = `${text}…`
     }
+    // Value near bottom — keep clear gap under the label
     page.drawText(text, {
       x: x + 4,
-      y: y + 6,
+      y: y + 5,
       size: vSize,
       font: fonts.regular,
       color: BLACK,
@@ -346,7 +348,7 @@ function drawEmployeeInfo(page: PDFPage, fonts: Fonts, data: CtoFormData, topY: 
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
   const barH = 13
-  const rowH = 22
+  const rowH = 28
   const rows = 3
   const bodyH = rowH * rows
   const y = topY - barH
