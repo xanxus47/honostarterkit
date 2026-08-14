@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import acr from './routes/acr'
 import cto from './routes/cto'
 import dtr from './routes/dtr'
 import oar from './routes/oar'
@@ -18,5 +19,6 @@ app.route('/oar', oar)
 app.route('/otc', otc)
 app.route('/cto', cto)
 app.route('/dtr', dtr)
+app.route('/acr', acr)
 
 export default app
