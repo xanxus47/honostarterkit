@@ -44,3 +44,9 @@ export type OtafFormData = {
   payrollCheckedBy?: string
   payrollApprovedBy?: string
 }
+
+export type OtafRecord = OtafFormData & {
+  id: string
+  createdAt: string
+  updatedAt: string
+}

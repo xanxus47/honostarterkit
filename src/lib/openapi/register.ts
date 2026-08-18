@@ -16,6 +16,7 @@ import {
   OcfRecord,
   OkSchema,
   OtafBody,
+  OtafRecord,
   OtcBody,
   OtcRecord,
   PdfSchema,
@@ -243,7 +244,13 @@ export function registerOpenApi(app: OpenAPIHono) {
     prefix: '/otaf',
     title: 'Overtime Authorization Form',
     body: OtafBody,
-    formPath: '/otaf',
+  })
+  registerCrud(app, {
+    tag: 'OTAF',
+    prefix: '/otaf',
+    title: 'Overtime Authorization Form',
+    body: OtafBody,
+    record: OtafRecord,
   })
 
   registerDownloadAndForm(app, {

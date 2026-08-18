@@ -496,6 +496,7 @@ export function itemSchema<T extends z.ZodType>(item: T, name: string) {
   return z.object({ data: item }).openapi(name)
 }
 
+export const OtafRecord = recordSchema(OtafBody, 'OtafRecord')
 export const OcfRecord = recordSchema(OcfBody, 'OcfRecord')
 export const OarRecord = recordSchema(OarBody, 'OarRecord')
 export const OtcRecord = recordSchema(OtcBody, 'OtcRecord')

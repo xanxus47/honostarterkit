@@ -1,9 +1,46 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import logoBytes from '../../assets/LGU-otaf.png'
 import { generateOtafPdf } from '../lib/otaf/generate-otaf'
+import { createOtaf, deleteOtaf, getOtaf, listOtaf, updateOtaf } from '../lib/otaf/store'
 import type { EmploymentStatus, OtafFormData } from '../lib/otaf/types'
 
 const otaf = new Hono()
+
+const FIELD_KEYS: (keyof OtafFormData)[] = [
+  'controlNumber',
+  'dateRequested',
+  'verificationCode',
+  'verificationUrl',
+  'employeeName',
+  'employeeId',
+  'position',
+  'officeDepartment',
+  'employmentStatus',
+  'employmentStatusOther',
+  'dateOfOvertime',
+  'timeIn',
+  'timeOut',
+  'estimatedTotalHours',
+  'purposeJustification',
+  'activityProject',
+  'fundingSource',
+  'supervisorName',
+  'supervisorPosition',
+  'supervisorDate',
+  'departmentHeadName',
+  'departmentHeadPosition',
+  'departmentHeadDate',
+  'hrmoName',
+  'hrmoPosition',
+  'hrmoDate',
+  'employeeSignatureName',
+  'employeeSignatureDate',
+  'payrollReferenceNo',
+  'payrollDatePosted',
+  'payrollEncodedBy',
+  'payrollCheckedBy',
+  'payrollApprovedBy',
+]
 
 function pick(form: FormData | URLSearchParams, key: string): string | undefined {
   const value = form.get(key)
@@ -24,7 +61,15 @@ function parseEmploymentStatus(value: string | undefined): EmploymentStatus | un
   return undefined
 }
 
-function parseOtafData(source: FormData | URLSearchParams | Record<string, unknown>): OtafFormData {
+function parseOtafData(
+  source: FormData | URLSearchParams | Record<string, unknown>,
+  opts?: { sparse?: boolean },
+): OtafFormData {
+  const sparse = opts?.sparse ?? false
+  const hasKey = (key: string): boolean => {
+    if (source instanceof FormData || source instanceof URLSearchParams) return source.has(key)
+    return Object.prototype.hasOwnProperty.call(source, key)
+  }
   const get = (key: string): string | undefined => {
     if (source instanceof FormData || source instanceof URLSearchParams) return pick(source, key)
     const value = source[key]
@@ -33,50 +78,30 @@ function parseOtafData(source: FormData | URLSearchParams | Record<string, unkno
     return trimmed.length ? trimmed : undefined
   }
 
-  return {
-    controlNumber: get('controlNumber'),
-    dateRequested: get('dateRequested'),
-    verificationCode: get('verificationCode'),
-    verificationUrl: get('verificationUrl'),
-
-    employeeName: get('employeeName'),
-    employeeId: get('employeeId'),
-    position: get('position'),
-    officeDepartment: get('officeDepartment'),
-
-    employmentStatus: parseEmploymentStatus(get('employmentStatus')),
-    employmentStatusOther: get('employmentStatusOther'),
-    dateOfOvertime: get('dateOfOvertime'),
-
-    timeIn: get('timeIn'),
-    timeOut: get('timeOut'),
-    estimatedTotalHours: get('estimatedTotalHours'),
-
-    purposeJustification: get('purposeJustification'),
-    activityProject: get('activityProject'),
-    fundingSource: get('fundingSource'),
-
-    supervisorName: get('supervisorName'),
-    supervisorPosition: get('supervisorPosition'),
-    supervisorDate: get('supervisorDate'),
-
-    departmentHeadName: get('departmentHeadName'),
-    departmentHeadPosition: get('departmentHeadPosition'),
-    departmentHeadDate: get('departmentHeadDate'),
-
-    hrmoName: get('hrmoName'),
-    hrmoPosition: get('hrmoPosition'),
-    hrmoDate: get('hrmoDate'),
-
-    employeeSignatureName: get('employeeSignatureName'),
-    employeeSignatureDate: get('employeeSignatureDate'),
-
-    payrollReferenceNo: get('payrollReferenceNo'),
-    payrollDatePosted: get('payrollDatePosted'),
-    payrollEncodedBy: get('payrollEncodedBy'),
-    payrollCheckedBy: get('payrollCheckedBy'),
-    payrollApprovedBy: get('payrollApprovedBy'),
+  const data: OtafFormData = {}
+  for (const key of FIELD_KEYS) {
+    if (sparse && !hasKey(key)) continue
+    if (key === 'employmentStatus') {
+      data.employmentStatus = parseEmploymentStatus(get(key))
+      continue
+    }
+    data[key] = get(key) as never
   }
+  return data
+}
+
+async function readBody(c: Context, opts?: { sparse?: boolean }): Promise<OtafFormData> {
+  const contentType = c.req.header('content-type') || ''
+  if (contentType.includes('application/json')) {
+    return parseOtafData((await c.req.json()) as Record<string, unknown>, opts)
+  }
+  if (
+    contentType.includes('application/x-www-form-urlencoded') ||
+    contentType.includes('multipart/form-data')
+  ) {
+    return parseOtafData(await c.req.formData(), opts)
+  }
+  return parseOtafData(c.req.query(), opts)
 }
 
 function formPage(): string {
@@ -197,7 +222,7 @@ function formPage(): string {
 <body>
   <main>
     <h1>Overtime Authorization Form (OTAF)</h1>
-    <p class="sub">Fill in the details below, then download the official PDF.</p>
+    <p class="sub">Fill in the details below, then save a record or download the official PDF.</p>
     <form method="POST" action="/otaf/download">
       <fieldset>
         <legend>Control</legend>
@@ -317,6 +342,7 @@ function formPage(): string {
 
       <div class="actions">
         <button type="submit">Download PDF</button>
+        <button type="submit" formaction="/otaf" formmethod="post" class="secondary">Save Record</button>
         <button type="reset" class="secondary">Clear</button>
       </div>
     </form>
@@ -337,22 +363,61 @@ async function pdfResponse(data: OtafFormData) {
   })
 }
 
-otaf.get('/', (c) => c.html(formPage()))
-otaf.get('', (c) => c.html(formPage()))
+otaf.get('/form', (c) => c.html(formPage()))
+otaf.get('/ui', (c) => c.html(formPage()))
 
-otaf.get('/download', async (c) => {
-  const data = parseOtafData(c.req.query())
-  return pdfResponse(data)
+otaf.get('/download', async (c) => pdfResponse(parseOtafData(c.req.query())))
+otaf.post('/download', async (c) => pdfResponse(await readBody(c)))
+
+otaf.get('/', (c) => {
+  const accept = c.req.header('accept') || ''
+  if (accept.includes('text/html') && !accept.includes('application/json')) {
+    return c.redirect('/otaf/form')
+  }
+  return c.json({ data: listOtaf() })
 })
 
-otaf.post('/download', async (c) => {
-  const contentType = c.req.header('content-type') || ''
-  if (contentType.includes('application/json')) {
-    const json = (await c.req.json()) as Record<string, unknown>
-    return pdfResponse(parseOtafData(json))
+otaf.post('/', async (c) => {
+  const data = await readBody(c)
+  const record = createOtaf(data)
+  const accept = c.req.header('accept') || ''
+  if (accept.includes('text/html') || (c.req.header('content-type') || '').includes('form')) {
+    return c.redirect(`/otaf/${record.id}/pdf`)
   }
-  const form = await c.req.formData()
-  return pdfResponse(parseOtafData(form))
+  return c.json({ data: record }, 201)
+})
+
+otaf.get('/:id', (c) => {
+  const record = getOtaf(c.req.param('id'))
+  if (!record) return c.json({ error: 'Not found' }, 404)
+  return c.json({ data: record })
+})
+
+otaf.put('/:id', async (c) => {
+  const record = updateOtaf(c.req.param('id'), await readBody(c))
+  if (!record) return c.json({ error: 'Not found' }, 404)
+  return c.json({ data: record })
+})
+
+otaf.patch('/:id', async (c) => {
+  const id = c.req.param('id')
+  const existing = getOtaf(id)
+  if (!existing) return c.json({ error: 'Not found' }, 404)
+  const patch = await readBody(c, { sparse: true })
+  const record = updateOtaf(id, { ...existing, ...patch })
+  return c.json({ data: record })
+})
+
+otaf.delete('/:id', (c) => {
+  const ok = deleteOtaf(c.req.param('id'))
+  if (!ok) return c.json({ error: 'Not found' }, 404)
+  return c.json({ ok: true })
+})
+
+otaf.get('/:id/pdf', async (c) => {
+  const record = getOtaf(c.req.param('id'))
+  if (!record) return c.json({ error: 'Not found' }, 404)
+  return pdfResponse(record)
 })
 
 export default otaf
