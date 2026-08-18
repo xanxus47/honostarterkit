@@ -649,47 +649,34 @@ function drawSupervisorAndHrmo(
   y -= 11
   page.drawText('Actual Attendance Verified:', { x: xL + 4, y, size: 5, font: fonts.bold, color: BLACK })
   y -= 10
-  labeledValue(page, fonts, 'Time In:', data.supervisorTimeIn, xL + 4, y, 45, 5, 5.5)
-  page.drawText(data.supervisorTimeInAmPm || 'AM/PM', {
-    x: xL + 78,
-    y,
-    size: 5,
-    font: fonts.regular,
-    color: GRAY,
-  })
-  labeledValue(page, fonts, 'Time Out:', data.supervisorTimeOut, xL + 110, y, 45, 5, 5.5)
-  page.drawText(data.supervisorTimeOutAmPm || 'AM/PM', {
-    x: xL + 190,
-    y,
-    size: 5,
-    font: fonts.regular,
-    color: GRAY,
-  })
+  const timeIn = [data.supervisorTimeIn, data.supervisorTimeInAmPm].filter(Boolean).join('')
+  const timeOut = [data.supervisorTimeOut, data.supervisorTimeOutAmPm].filter(Boolean).join('')
+  labeledValue(page, fonts, 'Time In:', timeIn || undefined, xL + 4, y, 52, 5, 5.5)
+  if (!timeIn) {
+    page.drawText('AM/PM', { x: xL + 78, y, size: 4.5, font: fonts.regular, color: GRAY })
+  }
+  labeledValue(page, fonts, 'Time Out:', timeOut || undefined, xL + 112, y, 52, 5, 5.5)
+  if (!timeOut) {
+    page.drawText('AM/PM', { x: xL + 192, y, size: 4.5, font: fonts.regular, color: GRAY })
+  }
   y -= 10
-  page.drawText('Supervisor Remarks:', { x: xL + 4, y, size: 5, font: fonts.regular, color: BLACK })
+  page.drawText('Supervisor Remarks:', { x: xL + 4, y, size: 5, font: fonts.bold, color: BLACK })
   const sRem = wrapText(data.supervisorRemarks || '', fonts.regular, 5, leftW - 12)
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     y -= 9
     drawUnderline(page, xL + 4, y, leftW - 10)
     if (sRem[i]) {
       page.drawText(sRem[i]!, { x: xL + 5, y: y + 1, size: 5, font: fonts.regular, color: BLACK })
     }
   }
-  y -= 12
-  drawSigCaption(
-    page,
-    fonts,
-    data.supervisorSignatureName,
-    'Signature over Printed Name',
-    xL + 8,
-    y,
-    leftW * 0.42,
-  )
-  labeledValue(page, fonts, 'Position:', data.supervisorPosition, xL + leftW * 0.48, y, 55, 4.8, 5)
-  labeledValue(page, fonts, 'Date:', data.supervisorDate, xL + leftW * 0.78, y, 40, 4.8, 5)
 
-  // HRMO — two-column findings, then stacked signature rows inside the panel
   const bodyBottom = topY - barH - bodyH
+  const sigLineY = bodyBottom + 14
+  const sigX = xL + 6
+  const sigW = leftW * 0.42
+  drawSigCaption(page, fonts, data.supervisorSignatureName, 'Signature over Printed Name', sigX, sigLineY, sigW)
+  labeledValue(page, fonts, 'Position:', data.supervisorPosition, xL + leftW * 0.48, sigLineY, 58, 4.8, 5)
+  labeledValue(page, fonts, 'Date:', data.supervisorDate, xL + leftW * 0.78, sigLineY, 42, 4.8, 5)
   let hy = topY - barH - 10
   page.drawText('HRMO Findings:', { x: xR + 4, y: hy, size: 5, font: fonts.bold, color: BLACK })
   const findingsLeft: [string, boolean | undefined][] = [

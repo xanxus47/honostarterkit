@@ -1,0 +1,505 @@
+import { z } from '@hono/zod-openapi'
+
+const s = z.string().optional()
+const b = z.boolean().optional()
+
+export const IdParam = z.object({
+  id: z.string().uuid().openapi({
+    param: { name: 'id', in: 'path' },
+    example: '8fb57aff-e33b-42ee-a89d-405b6af0086e',
+  }),
+})
+
+export const ErrorSchema = z
+  .object({
+    error: z.string(),
+  })
+  .openapi('Error')
+
+export const OkSchema = z.object({ ok: z.literal(true) }).openapi('Ok')
+
+export const PdfSchema = z.string().openapi({ format: 'binary', description: 'A4 PDF file' })
+
+function withMeta<T extends z.ZodType>(schema: T, name: string) {
+  return schema.openapi(name)
+}
+
+export const OtafBody = withMeta(
+  z
+    .object({
+      controlNumber: s,
+      dateRequested: s,
+      verificationCode: s,
+      verificationUrl: s,
+      employeeName: s,
+      employeeId: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: z.enum(['permanent', 'jobOrder', 'contractual', 'others']).optional(),
+      employmentStatusOther: s,
+      dateOfOvertime: s,
+      timeIn: s,
+      timeOut: s,
+      estimatedTotalHours: s,
+      purposeJustification: s,
+      activityProject: s,
+      fundingSource: s,
+      supervisorName: s,
+      supervisorPosition: s,
+      supervisorDate: s,
+      departmentHeadName: s,
+      departmentHeadPosition: s,
+      departmentHeadDate: s,
+      hrmoName: s,
+      hrmoPosition: s,
+      hrmoDate: s,
+      employeeSignatureName: s,
+      employeeSignatureDate: s,
+      payrollReferenceNo: s,
+      payrollDatePosted: s,
+      payrollEncodedBy: s,
+      payrollCheckedBy: s,
+      payrollApprovedBy: s,
+    })
+    .passthrough(),
+  'OtafForm',
+)
+
+export const OcfBody = withMeta(
+  z
+    .object({
+      otcNumber: s,
+      dateFiled: s,
+      otaControlNumber: s,
+      dateApproved: s,
+      employeeId: s,
+      employeeName: s,
+      position: s,
+      officeDepartment: s,
+      dateOfOvertime: s,
+      daysOfWeek: s,
+      timeIn: s,
+      timeOut: s,
+      approvedTotalHours: s,
+      purposeJustification: s,
+      reasonForCancellation: s,
+      requestedBy: s,
+      requestedByPosition: s,
+      requestedByOffice: s,
+      dateRequested: s,
+      approvedBy: s,
+      approvedByPosition: s,
+      approvedByOffice: s,
+      approvedByDate: s,
+      hrmoReceivedBy: s,
+      hrmoDateReceived: s,
+      hrmoEncodedBy: s,
+      hrmoRemarks: s,
+    })
+    .passthrough(),
+  'OcfForm',
+)
+
+export const OarBody = withMeta(
+  z
+    .object({
+      controlNumber: s,
+      dateFiled: s,
+      employeeId: s,
+      employeeName: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: s,
+      payrollGroup: s,
+      dateOfOvertime: s,
+      dayOfWeek: s,
+      approvedTimeIn: s,
+      approvedTimeOut: s,
+      approvedTotalHours: s,
+      actualTimeIn: s,
+      actualTimeOut: s,
+      actualTotalHours: s,
+      activitiesPerformed: s,
+      outputsDeliverables: s,
+      problemsEncountered: s,
+      supervisorRating: z
+        .enum(['outstanding', 'verySatisfactory', 'satisfactory', 'needsImprovement', 'unsatisfactory'])
+        .optional(),
+      commentsRecommendations: s,
+      employeeSignatureName: s,
+      employeeSignatureDate: s,
+      supervisorSignatureName: s,
+      supervisorPosition: s,
+      supervisorSignatureDate: s,
+      hrmoReceivedBy: s,
+      hrmoReceivedDate: s,
+      hrmoVerifiedBy: s,
+      hrmoVerifiedDate: s,
+    })
+    .passthrough(),
+  'OarForm',
+)
+
+export const OtcBody = withMeta(
+  z
+    .object({
+      controlNumber: s,
+      dateCertified: s,
+      employeeName: s,
+      employeeId: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: s,
+      payrollGroup: s,
+      datesOfOvertime: s,
+      daysOfWeek: s,
+      approvedOvertimeHours: s,
+      actualHoursRendered: s,
+      natureOfWork: s,
+      disposition: z.enum(['overtimePay', 'cto']).optional(),
+      supervisorName: s,
+      supervisorDate: s,
+      departmentHeadName: s,
+      departmentHeadDate: s,
+      hrmoName: s,
+      hrmoDate: s,
+      payrollProcessedBy: s,
+      payrollProcessedDate: s,
+      payrollEncodedBy: s,
+      payrollEncodedDate: s,
+      payrollApprovedBy: s,
+      payrollApprovedDate: s,
+    })
+    .passthrough(),
+  'OtcForm',
+)
+
+export const CtoBody = withMeta(
+  z
+    .object({
+      controlNumber: s,
+      dateFiled: s,
+      employeeName: s,
+      employeeId: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: s,
+      payrollGroup: s,
+      overtimeCertificationNo: s,
+      datesEarned: s,
+      totalEarnedCtoHours: s,
+      availableCtoBalance: s,
+      datesRequested: s,
+      timeFrom: s,
+      timeTo: s,
+      totalHoursRequested: s,
+      purposeReason: s,
+      employeeSignatureName: s,
+      employeeSignatureDate: s,
+      supervisorDecision: z.enum(['approved', 'disapproved']).optional(),
+      supervisorRemarks: s,
+      supervisorSignatureName: s,
+      supervisorPrintedName: s,
+      supervisorPosition: s,
+      supervisorDate: s,
+      deptHeadDecision: z.enum(['approved', 'disapproved']).optional(),
+      deptHeadRemarks: s,
+      deptHeadSignatureName: s,
+      deptHeadPrintedName: s,
+      deptHeadDate: s,
+      earnedCtoCredits: s,
+      hoursRequested: s,
+      remainingCtoBalance: s,
+      hrmoVerifiedBy: s,
+      hrmoVerifiedDate: s,
+      processedBy: s,
+      recordedBy: s,
+      approvedBy: s,
+      dateProcessed: s,
+      ctoLedgerReferenceNo: s,
+    })
+    .passthrough(),
+  'CtoForm',
+)
+
+export const DtrDayEntry = z
+  .object({
+    day: z.number().int().min(1).max(31).optional(),
+    dayName: s,
+    amIn: s,
+    amOut: s,
+    pmIn: s,
+    pmOut: s,
+    otIn: s,
+    otOut: s,
+    undertimeMinutes: s,
+    totalHoursWorked: s,
+    remarks: s,
+  })
+  .openapi('DtrDayEntry')
+
+export const DtrBody = withMeta(
+  z
+    .object({
+      controlNumber: s,
+      dateIssued: s,
+      employeeName: s,
+      employeeId: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: z.enum(['permanent', 'jobOrder', 'contractOfService']).optional(),
+      payrollGroup: s,
+      periodFrom: s,
+      periodTo: s,
+      numberOfDays: s,
+      days: z.array(DtrDayEntry).optional(),
+      totalHoursWorked: s,
+      totalOvertime: s,
+      totalUndertime: s,
+      totalMinutesLate: s,
+      employeeSignatureName: s,
+      employeeSignatureDate: s,
+      supervisorSignatureName: s,
+      supervisorPosition: s,
+      supervisorDate: s,
+      departmentHeadSignatureName: s,
+      departmentHeadPosition: s,
+      departmentHeadDate: s,
+      hrmoSignatureName: s,
+      hrmoDate: s,
+    })
+    .passthrough(),
+  'DtrForm',
+)
+
+export const AcrBody = withMeta(
+  z
+    .object({
+      correctionRequestNo: s,
+      dateFiled: s,
+      dtrControlNo: s,
+      attendanceDate: s,
+      employeeName: s,
+      employeeId: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: s,
+      payrollGroup: s,
+      reasonForgotTimeIn: b,
+      reasonForgotTimeOut: b,
+      reasonForgotAmIn: b,
+      reasonForgotAmOut: b,
+      reasonForgotPmIn: b,
+      reasonForgotPmOut: b,
+      reasonForgotOtIn: b,
+      reasonForgotOtOut: b,
+      reasonBiometricError: b,
+      reasonSystemError: b,
+      reasonOfficialFieldWork: b,
+      reasonOfficialBusiness: b,
+      reasonOther: b,
+      reasonOtherText: s,
+      originalDate: s,
+      requestedDate: s,
+      originalAmIn: s,
+      requestedAmIn: s,
+      originalAmOut: s,
+      requestedAmOut: s,
+      originalPmIn: s,
+      requestedPmIn: s,
+      originalPmOut: s,
+      requestedPmOut: s,
+      originalOtIn: s,
+      requestedOtIn: s,
+      originalOtOut: s,
+      requestedOtOut: s,
+      requestedTotalHours: s,
+      requestedOvertime: s,
+      requestedUndertime: s,
+      actualArrivalDeparture: s,
+      explanation: s,
+      employeeSignatureName: s,
+      employeeSignatureDate: s,
+      supportLocatorSlip: b,
+      supportCertificateAppearance: b,
+      supportOfficialBusiness: b,
+      supportSupervisorCert: b,
+      supportBiometricLog: b,
+      supportSystemErrorRecord: b,
+      supportOther: b,
+      supportOtherText: s,
+      supportNone: b,
+      documentReferenceNo: s,
+      supportRemarks: s,
+      supervisorVerified: b,
+      supervisorNotVerified: b,
+      supervisorFurtherVerification: b,
+      supervisorTimeIn: s,
+      supervisorTimeInAmPm: s,
+      supervisorTimeOut: s,
+      supervisorTimeOutAmPm: s,
+      supervisorRemarks: s,
+      supervisorSignatureName: s,
+      supervisorPosition: s,
+      supervisorDate: s,
+      hrmoCorrectionSupported: b,
+      hrmoSupervisorSufficient: b,
+      hrmoDocumentSufficient: b,
+      hrmoAdditionalDocsRequired: b,
+      hrmoNotSupported: b,
+      hrmoRepeatedMissed: b,
+      hrmoOther: b,
+      hrmoOtherText: s,
+      similarCorrectionsCount: s,
+      hrmoRemarks: s,
+      hrmoReviewedBy: s,
+      hrmoPosition: s,
+      hrmoSignatureName: s,
+      hrmoDate: s,
+      approvalApproved: b,
+      approvalDisapproved: b,
+      approvalReturned: b,
+      approvedAmIn: s,
+      approvedAmOut: s,
+      approvedPmIn: s,
+      approvedPmOut: s,
+      approvedOtIn: s,
+      approvedOtOut: s,
+      approvalRemarks: s,
+      approverName: s,
+      approverPosition: s,
+      approverSignatureName: s,
+      approverDate: s,
+      updateEncoded: b,
+      updateOriginalPreserved: b,
+      updateRequestAttached: b,
+      updateDocsAttached: b,
+      updateAuditTrail: b,
+      updateEmployeeNotified: b,
+      originalSystemEntry: s,
+      correctedSystemEntry: s,
+      updatedBy: s,
+      dateTimeUpdated: s,
+      auditReferenceNo: s,
+      statusCorrected: b,
+      statusNotCorrected: b,
+      statusDisapproved: b,
+      statusPending: b,
+      hrmoFinalVerification: s,
+      finalStatusDate: s,
+    })
+    .passthrough(),
+  'AcrForm',
+)
+
+export const LocatorBody = withMeta(
+  z
+    .object({
+      locatorControlNo: s,
+      dateFiled: s,
+      employeeName: s,
+      employeeId: s,
+      position: s,
+      officeDepartment: s,
+      purposeOfficialBusiness: b,
+      purposeFieldWork: b,
+      purposeMeeting: b,
+      purposeTraining: b,
+      purposeDataCollection: b,
+      purposeProject: b,
+      purposeOthers: b,
+      purposeOthersText: s,
+      locationAddress: s,
+      barangay: s,
+      municipalityCity: s,
+      province: s,
+      nearestLandmark: s,
+      dateFrom: s,
+      timeFrom: s,
+      timeFromAm: b,
+      timeFromPm: b,
+      dateTo: s,
+      timeTo: s,
+      timeToAm: b,
+      timeToPm: b,
+      totalDuration: s,
+      durationHours: b,
+      durationDays: b,
+      mobileNumber: s,
+      commCall: b,
+      commSms: b,
+      commViber: b,
+      commEmail: b,
+      commOthers: b,
+      commOthersText: s,
+      employeeSignatureName: s,
+      employeeSignatureDate: s,
+      supervisorSignatureName: s,
+      supervisorDate: s,
+      departmentHeadSignatureName: s,
+      departmentHeadDate: s,
+      receivedByHrmo: s,
+      dateReceived: s,
+      recordedInSystemBy: s,
+      locatorSlipNo: s,
+      certificateControlNo: s,
+      dateIssued: s,
+      appearanceEmployeeName: s,
+      appearanceEmployeeId: s,
+      appearancePosition: s,
+      appearanceOffice: s,
+      appearanceLocation: s,
+      appearancePurpose: s,
+      dateOfAppearance: s,
+      timeOfAppearance: s,
+      appearanceTimeAm: b,
+      appearanceTimePm: b,
+      timeOfDeparture: s,
+      departureTimeAm: b,
+      departureTimePm: b,
+      activityUndertaken: s,
+      remarksSummary: s,
+      ackSignatureName: s,
+      ackDate: s,
+      certifiedByName: s,
+      certifiedByPosition: s,
+      certifiedByOffice: s,
+      certifiedByDate: s,
+      certifiedByContact: s,
+      certReceivedByHrmo: s,
+      certDateReceived: s,
+      certRecordedBy: s,
+      certReferenceNo: s,
+      certLocatorSlipNo: s,
+      certControlNoRecord: s,
+    })
+    .passthrough(),
+  'LocatorForm',
+)
+
+export function recordSchema<T extends z.ZodType>(body: T, name: string) {
+  return z
+    .object({
+      id: z.string().uuid(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    })
+    .and(body)
+    .openapi(name)
+}
+
+export function listSchema<T extends z.ZodType>(item: T, name: string) {
+  return z.object({ data: z.array(item) }).openapi(name)
+}
+
+export function itemSchema<T extends z.ZodType>(item: T, name: string) {
+  return z.object({ data: item }).openapi(name)
+}
+
+export const OcfRecord = recordSchema(OcfBody, 'OcfRecord')
+export const OarRecord = recordSchema(OarBody, 'OarRecord')
+export const OtcRecord = recordSchema(OtcBody, 'OtcRecord')
+export const CtoRecord = recordSchema(CtoBody, 'CtoRecord')
+export const DtrRecord = recordSchema(DtrBody, 'DtrRecord')
+export const AcrRecord = recordSchema(AcrBody, 'AcrRecord')
+export const LocatorRecord = recordSchema(LocatorBody, 'LocatorRecord')

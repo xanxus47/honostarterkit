@@ -323,8 +323,13 @@ function formPage(): string {
           <label>Requested PM In <input name="requestedPmIn" /></label>
           <label>Original PM Out <input name="originalPmOut" /></label>
           <label>Requested PM Out <input name="requestedPmOut" /></label>
-          <label>Requested Total Hours <input name="requestedTotalHours" /></label>
-          <label>Requested Overtime <input name="requestedOvertime" /></label>
+          <label>Original OT In <input name="originalOtIn" /></label>
+          <label>Requested OT In <input name="requestedOtIn" /></label>
+          <label>Original OT Out <input name="originalOtOut" /></label>
+          <label>Requested OT Out <input name="requestedOtOut" /></label>
+          <label>Requested Total Hours (hrs) <input name="requestedTotalHours" /></label>
+          <label>Requested Overtime (hrs) <input name="requestedOvertime" /></label>
+          <label>Requested Undertime (mins) <input name="requestedUndertime" /></label>
         </div>
       </fieldset>
 
@@ -332,9 +337,133 @@ function formPage(): string {
         <legend>5. Employee Explanation</legend>
         <div class="grid">
           <label>Actual Arrival / Departure <input name="actualArrivalDeparture" /></label>
-          <label>Employee Signature Name <input name="employeeSignatureName" /></label>
+          <label>Employee Signature Date <input name="employeeSignatureDate" placeholder="YYYY-MM-DD" /></label>
         </div>
         <label style="margin-top:10px">Explanation <textarea name="explanation"></textarea></label>
+        <div class="grid" style="margin-top:10px">
+          <label>Employee Signature over Printed Name <input name="employeeSignatureName" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>6. Supporting Document / Proof of Attendance</legend>
+        <div class="checks">
+          <label><input type="checkbox" name="supportLocatorSlip" value="true" /> Locator Slip</label>
+          <label><input type="checkbox" name="supportCertificateAppearance" value="true" /> Certificate of Appearance</label>
+          <label><input type="checkbox" name="supportOfficialBusiness" value="true" /> Official Business / Travel Order</label>
+          <label><input type="checkbox" name="supportSupervisorCert" value="true" /> Supervisor Certification</label>
+          <label><input type="checkbox" name="supportBiometricLog" value="true" /> Biometric / Attendance System Log</label>
+          <label><input type="checkbox" name="supportSystemErrorRecord" value="true" /> System Error Record</label>
+          <label><input type="checkbox" name="supportOther" value="true" /> Other Supporting Document</label>
+          <label><input type="checkbox" name="supportNone" value="true" /> No Supporting Document Available</label>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <label>Other Supporting Document <input name="supportOtherText" /></label>
+          <label>Document / Reference No. <input name="documentReferenceNo" /></label>
+        </div>
+        <label style="margin-top:10px">Remarks <textarea name="supportRemarks"></textarea></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>7. Immediate Supervisor Verification</legend>
+        <div class="checks">
+          <label><input type="checkbox" name="supervisorVerified" value="true" /> VERIFIED - CORRECTION RECOMMENDED</label>
+          <label><input type="checkbox" name="supervisorNotVerified" value="true" /> NOT VERIFIED</label>
+          <label><input type="checkbox" name="supervisorFurtherVerification" value="true" /> FOR FURTHER VERIFICATION</label>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <label>Time In <input name="supervisorTimeIn" /></label>
+          <label>Time In AM/PM <input name="supervisorTimeInAmPm" placeholder="AM/PM" /></label>
+          <label>Time Out <input name="supervisorTimeOut" /></label>
+          <label>Time Out AM/PM <input name="supervisorTimeOutAmPm" placeholder="AM/PM" /></label>
+        </div>
+        <label style="margin-top:10px">Supervisor Remarks <textarea name="supervisorRemarks"></textarea></label>
+        <div class="grid" style="margin-top:10px">
+          <label>Signature over Printed Name <input name="supervisorSignatureName" /></label>
+          <label>Position <input name="supervisorPosition" /></label>
+          <label>Date <input name="supervisorDate" placeholder="YYYY-MM-DD" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>8. HRMO Review</legend>
+        <div class="checks">
+          <label><input type="checkbox" name="hrmoCorrectionSupported" value="true" /> Attendance correction is supported</label>
+          <label><input type="checkbox" name="hrmoNotSupported" value="true" /> Correction is not supported</label>
+          <label><input type="checkbox" name="hrmoSupervisorSufficient" value="true" /> Supervisor verification is sufficient</label>
+          <label><input type="checkbox" name="hrmoRepeatedMissed" value="true" /> Repeated missed time-in/time-out identified</label>
+          <label><input type="checkbox" name="hrmoDocumentSufficient" value="true" /> Supporting document is sufficient</label>
+          <label><input type="checkbox" name="hrmoOther" value="true" /> Other</label>
+          <label><input type="checkbox" name="hrmoAdditionalDocsRequired" value="true" /> Additional documentation required</label>
+          <label>Other text <input name="hrmoOtherText" /></label>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <label>Number of Similar Corrections During Current Period <input name="similarCorrectionsCount" /></label>
+        </div>
+        <label style="margin-top:10px">HRMO Remarks <textarea name="hrmoRemarks"></textarea></label>
+        <div class="grid" style="margin-top:10px">
+          <label>Reviewed By <input name="hrmoReviewedBy" /></label>
+          <label>Position <input name="hrmoPosition" /></label>
+          <label>Signature <input name="hrmoSignatureName" /></label>
+          <label>Date <input name="hrmoDate" placeholder="YYYY-MM-DD" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>9. Authorized Approval</legend>
+        <div class="checks">
+          <label><input type="checkbox" name="approvalApproved" value="true" /> APPROVED</label>
+          <label><input type="checkbox" name="approvalDisapproved" value="true" /> DISAPPROVED</label>
+          <label><input type="checkbox" name="approvalReturned" value="true" /> RETURNED FOR CLARIFICATION</label>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <label>AM In <input name="approvedAmIn" /></label>
+          <label>AM Out <input name="approvedAmOut" /></label>
+          <label>PM In <input name="approvedPmIn" /></label>
+          <label>PM Out <input name="approvedPmOut" /></label>
+          <label>OT In <input name="approvedOtIn" /></label>
+          <label>OT Out <input name="approvedOtOut" /></label>
+        </div>
+        <label style="margin-top:10px">Remarks <textarea name="approvalRemarks"></textarea></label>
+        <div class="grid" style="margin-top:10px">
+          <label>Authorized Approving Officer <input name="approverName" /></label>
+          <label>Position <input name="approverPosition" /></label>
+          <label>Signature <input name="approverSignatureName" /></label>
+          <label>Date <input name="approverDate" placeholder="YYYY-MM-DD" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>10. System Update (HRMO / Admin Use Only)</legend>
+        <div class="checks">
+          <label><input type="checkbox" name="updateEncoded" value="true" /> Approved correction encoded</label>
+          <label><input type="checkbox" name="updateOriginalPreserved" value="true" /> Original system record preserved</label>
+          <label><input type="checkbox" name="updateRequestAttached" value="true" /> Correction request attached to employee attendance record</label>
+          <label><input type="checkbox" name="updateDocsAttached" value="true" /> Supporting documents attached</label>
+          <label><input type="checkbox" name="updateAuditTrail" value="true" /> Audit trail generated</label>
+          <label><input type="checkbox" name="updateEmployeeNotified" value="true" /> Employee notified</label>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <label>Original System Entry <input name="originalSystemEntry" /></label>
+          <label>Corrected System Entry <input name="correctedSystemEntry" /></label>
+          <label>Updated By <input name="updatedBy" /></label>
+          <label>Date / Time Updated <input name="dateTimeUpdated" /></label>
+          <label>System Transaction / Audit Reference No. <input name="auditReferenceNo" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>11. Final Status</legend>
+        <div class="checks">
+          <label><input type="checkbox" name="statusCorrected" value="true" /> CORRECTED</label>
+          <label><input type="checkbox" name="statusNotCorrected" value="true" /> NOT CORRECTED</label>
+          <label><input type="checkbox" name="statusDisapproved" value="true" /> DISAPPROVED</label>
+          <label><input type="checkbox" name="statusPending" value="true" /> PENDING</label>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <label>HRMO Final Verification <input name="hrmoFinalVerification" /></label>
+          <label>Date <input name="finalStatusDate" placeholder="YYYY-MM-DD" /></label>
+        </div>
       </fieldset>
 
       <div class="actions">
