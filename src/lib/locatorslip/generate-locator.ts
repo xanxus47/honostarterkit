@@ -260,7 +260,7 @@ export async function generateLocatorPdf(
   })
 
   drawLocatorSlip(page, fonts, logo, locatorNo, data)
-  drawScissorsCut(page, 418)
+  drawScissorsCut(page, 358)
   drawCertificate(page, fonts, logo, certNo, locatorNo, data)
 
   pdf.setTitle(`Locator Slip ${locatorNo}`)
@@ -321,22 +321,45 @@ function drawLocatorSlip(
 
   let y = top - 66
   const barH = 9
+  const gap = 3
 
-  // 1. Employee
-  let bodyH = 24
+  // 1. Employee — two columns so Employee ID and Office / Department share the same x
+  let bodyH = 28
   let { barY } = drawPanel(page, x, y, w, bodyH, '1. EMPLOYEE INFORMATION', fonts, barH)
-  let row = barY - 9
-  labeledValue(page, fonts, 'Name:', data.employeeName, x + 5, row, w * 0.52)
-  labeledValue(page, fonts, 'Employee ID:', data.employeeId, x + w * 0.62, row, w * 0.32)
-  row -= 11
-  labeledValue(page, fonts, 'Position / Designation:', data.position, x + 5, row, w * 0.36)
-  labeledValue(page, fonts, 'Office / Department:', data.officeDepartment, x + w * 0.52, row, w * 0.42)
-  y = barY - bodyH - 2
+  let row = barY - 10
+  const leftX = x + 5
+  const col2X = x + Math.round(w * 0.52)
+  const rightEdge = x + w - 8
+  const labelSize = 5.4
+  const underlineW = (label: string, startX: number, endX: number) =>
+    Math.max(36, endX - startX - fonts.regular.widthOfTextAtSize(label, labelSize) - 4)
+  labeledValue(page, fonts, 'Name:', data.employeeName, leftX, row, underlineW('Name:', leftX, col2X - 8))
+  labeledValue(page, fonts, 'Employee ID:', data.employeeId, col2X, row, underlineW('Employee ID:', col2X, rightEdge))
+  row -= 12
+  labeledValue(
+    page,
+    fonts,
+    'Position / Designation:',
+    data.position,
+    leftX,
+    row,
+    underlineW('Position / Designation:', leftX, col2X - 8),
+  )
+  labeledValue(
+    page,
+    fonts,
+    'Office / Department:',
+    data.officeDepartment,
+    col2X,
+    row,
+    underlineW('Office / Department:', col2X, rightEdge),
+  )
+  y = barY - bodyH - gap
 
   // 2. Purpose
-  bodyH = 30
+  bodyH = 36
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '2. PURPOSE / TYPE OF OUT-OF-OFFICE WORK (v)', fonts, barH))
-  row = barY - 10
+  row = barY - 11
   const purposes: [string, boolean | undefined][] = [
     ['Official Business (OB)', data.purposeOfficialBusiness],
     ['Field Work / Inspection', data.purposeFieldWork],
@@ -349,56 +372,56 @@ function drawLocatorSlip(
   for (let i = 0; i < purposes.length; i++) {
     const col = i % 3
     const r = Math.floor(i / 3)
-    drawCheckbox(page, x + 5 + col * colW, row - r * 9, purposes[i]![0], purposes[i]![1], fonts.regular, 5)
+    drawCheckbox(page, x + 5 + col * colW, row - r * 10, purposes[i]![0], purposes[i]![1], fonts.regular, 5)
   }
-  row -= 18
+  row -= 20
   drawCheckbox(page, x + 5, row, 'Others (please specify):', data.purposeOthers, fonts.regular, 5)
   drawUnderline(page, x + 108, row - 1, w - 118)
   if (data.purposeOthersText) {
     page.drawText(data.purposeOthersText, { x: x + 110, y: row, size: 5.5, font: fonts.regular, color: BLACK })
   }
-  y = barY - bodyH - 2
+  y = barY - bodyH - gap
 
   // 3. Location
-  bodyH = 34
+  bodyH = 40
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '3. LOCATION DETAILS', fonts, barH))
-  row = barY - 10
+  row = barY - 11
   labeledValue(page, fonts, 'Location / Address:', data.locationAddress, x + 5, row, w - 108)
-  row -= 11
+  row -= 12
   labeledValue(page, fonts, 'Barangay:', data.barangay, x + 5, row, w * 0.38)
   labeledValue(page, fonts, 'Municipality / City:', data.municipalityCity, x + w * 0.5, row, w * 0.42)
-  row -= 11
+  row -= 12
   labeledValue(page, fonts, 'Province:', data.province, x + 5, row, w * 0.38)
   labeledValue(page, fonts, 'Nearest Landmark:', data.nearestLandmark, x + w * 0.5, row, w * 0.42)
-  y = barY - bodyH - 2
+  y = barY - bodyH - gap
 
   // 4. Date and time
-  bodyH = 34
+  bodyH = 40
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '4. DATE AND TIME', fonts, barH))
-  row = barY - 10
+  row = barY - 11
   labeledValue(page, fonts, 'Date (From):', data.dateFrom, x + 5, row, 70)
   page.drawText('(YYYY-MM-DD)', { x: x + 115, y: row, size: 4.4, font: fonts.regular, color: GRAY })
   labeledValue(page, fonts, 'Time (From):', data.timeFrom, x + 175, row, 50)
   drawCheckbox(page, x + 280, row, 'AM', data.timeFromAm, fonts.regular, 5)
   drawCheckbox(page, x + 318, row, 'PM', data.timeFromPm, fonts.regular, 5)
-  row -= 11
+  row -= 12
   labeledValue(page, fonts, 'Date (To):', data.dateTo, x + 5, row, 70)
   page.drawText('(YYYY-MM-DD)', { x: x + 108, y: row, size: 4.4, font: fonts.regular, color: GRAY })
   labeledValue(page, fonts, 'Time (To):', data.timeTo, x + 175, row, 50)
   drawCheckbox(page, x + 280, row, 'AM', data.timeToAm, fonts.regular, 5)
   drawCheckbox(page, x + 318, row, 'PM', data.timeToPm, fonts.regular, 5)
-  row -= 11
+  row -= 12
   labeledValue(page, fonts, 'Total Duration:', data.totalDuration, x + 5, row, 80)
   drawCheckbox(page, x + 175, row, 'Hour(s)', data.durationHours, fonts.regular, 5)
   drawCheckbox(page, x + 230, row, 'Day(s)', data.durationDays, fonts.regular, 5)
-  y = barY - bodyH - 2
+  y = barY - bodyH - gap
 
   // 5. Contact
-  bodyH = 24
+  bodyH = 28
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '5. CONTACT INFORMATION', fonts, barH))
-  row = barY - 9
+  row = barY - 10
   labeledValue(page, fonts, 'Mobile Number (active during field work):', data.mobileNumber, x + 5, row, 160)
-  row -= 11
+  row -= 12
   page.drawText('Mode of Communication / Updates:', { x: x + 5, y: row, size: 5.2, font: fonts.regular, color: BLACK })
   drawCheckbox(page, x + 148, row, 'Call', data.commCall, fonts.regular, 5)
   drawCheckbox(page, x + 188, row, 'SMS', data.commSms, fonts.regular, 5)
@@ -409,25 +432,25 @@ function drawLocatorSlip(
   if (data.commOthersText) {
     page.drawText(data.commOthersText, { x: x + 374, y: row, size: 5.2, font: fonts.regular, color: BLACK })
   }
-  y = barY - bodyH - 2
+  y = barY - bodyH - gap
 
   // 6. Certification
-  bodyH = 38
+  bodyH = 48
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '6. EMPLOYEE CERTIFICATION', fonts, barH))
   const certText =
     'I hereby certify that the information provided above is true and correct and that I will be in the stated location for official work and will remain reachable through the contact number provided.'
-  let ty = barY - 9
+  let ty = barY - 10
   for (const line of wrapText(certText, fonts.regular, 5, w - 12).slice(0, 2)) {
     page.drawText(line, { x: x + 5, y: ty, size: 5, font: fonts.regular, color: BLACK })
     ty -= 7
   }
-  const sigY = barY - bodyH + 12
+  const sigY = barY - bodyH + 14
   drawSigCaption(page, fonts, data.employeeSignatureName, 'Signature over Printed Name', x + 20, sigY, 200)
   drawSigCaption(page, fonts, data.employeeSignatureDate, 'Date (YYYY-MM-DD)', x + w - 170, sigY, 130)
-  y = barY - bodyH - 2
+  y = barY - bodyH - gap
 
   // 7. Approval
-  bodyH = 36
+  bodyH = 52
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '7. APPROVAL', fonts, barH))
   const col = w / 2
   page.drawLine({
@@ -436,11 +459,11 @@ function drawLocatorSlip(
     thickness: 0.5,
     color: LINE_BLUE,
   })
-  page.drawText('Immediate Supervisor', { x: x + 8, y: barY - 10, size: 5.5, font: fonts.bold, color: BLACK })
-  page.drawText('Department Head', { x: x + col + 8, y: barY - 10, size: 5.5, font: fonts.bold, color: BLACK })
-  const aY = barY - bodyH + 14
+  page.drawText('Immediate Supervisor', { x: x + 8, y: barY - 11, size: 5.5, font: fonts.bold, color: BLACK })
+  page.drawText('Department Head', { x: x + col + 8, y: barY - 11, size: 5.5, font: fonts.bold, color: BLACK })
+  const aY = barY - bodyH + 22
   drawSigCaption(page, fonts, data.supervisorSignatureName, 'Signature over Printed Name', x + 16, aY, col - 32)
-  labeledValue(page, fonts, 'Date:', data.supervisorDate, x + 16, aY - 12, 80, 5, 5.5)
+  labeledValue(page, fonts, 'Date:', data.supervisorDate, x + 16, aY - 16, 80, 5, 5.5)
   drawSigCaption(
     page,
     fonts,
@@ -450,16 +473,16 @@ function drawLocatorSlip(
     aY,
     col - 32,
   )
-  labeledValue(page, fonts, 'Date:', data.departmentHeadDate, x + col + 16, aY - 12, 80, 5, 5.5)
-  y = barY - bodyH - 2
+  labeledValue(page, fonts, 'Date:', data.departmentHeadDate, x + col + 16, aY - 16, 80, 5, 5.5)
+  y = barY - bodyH - gap
 
   // 8. Record
-  bodyH = 24
+  bodyH = 28
   ;({ barY } = drawPanel(page, x, y, w, bodyH, '8. RECORD (FOR HRMO USE ONLY)', fonts, barH))
-  row = barY - 9
+  row = barY - 10
   labeledValue(page, fonts, 'Received by (HRMO):', data.receivedByHrmo, x + 5, row, 140)
   labeledValue(page, fonts, 'Date Received:', data.dateReceived, x + w * 0.52, row, 140)
-  row -= 11
+  row -= 12
   labeledValue(page, fonts, 'Recorded in System by:', data.recordedInSystemBy, x + 5, row, 130)
   labeledValue(page, fonts, 'Locator Slip No.:', data.locatorSlipNo || locatorNo, x + w * 0.52, row, 140)
 }
@@ -474,21 +497,21 @@ function drawCertificate(
 ) {
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
-  const top = 408
-  const logoSize = 32
+  const top = 348
+  const logoSize = 26
   page.drawImage(logo, { x, y: top - logoSize, width: logoSize, height: logoSize })
 
-  const cx0 = x + 38
+  const cx0 = x + 32
   const cx1 = PAGE_W - MARGIN - 118
-  drawCentered(page, 'CERTIFICATE OF APPEARANCE', top - 14, fonts.bold, 11, TITLE_BLUE, cx0, cx1)
-  drawCentered(page, '(For Official Out-of-Office Work)', top - 24, fonts.italic, 6, GRAY, cx0, cx1)
+  drawCentered(page, 'CERTIFICATE OF APPEARANCE', top - 12, fonts.bold, 9.5, TITLE_BLUE, cx0, cx1)
+  drawCentered(page, '(For Official Out-of-Office Work)', top - 21, fonts.italic, 5.2, GRAY, cx0, cx1)
 
   const boxW = 108
   const boxX = PAGE_W - MARGIN - boxW
   drawControlBox(page, fonts, boxX, top, boxW, 'CERTIFICATE CONTROL NO.', certNo)
-  drawControlBox(page, fonts, boxX, top - 30, boxW, 'DATE ISSUED', data.dateIssued, '(YYYY-MM-DD)')
+  drawControlBox(page, fonts, boxX, top - 28, boxW, 'DATE ISSUED', data.dateIssued, '(YYYY-MM-DD)')
 
-  let y = top - 64
+  let y = top - 52
   const name = data.appearanceEmployeeName || data.employeeName
   const empId = data.appearanceEmployeeId || data.employeeId
   const pos = data.appearancePosition || data.position
@@ -504,54 +527,54 @@ function drawCertificate(
   }
   const nameEnd = x + prefixW + 224
   labeledValue(page, fonts, '(Employee Name), Employee ID:', empId, nameEnd, y, 90, 5.2, 6)
-  y -= 12
-  labeledValue(page, fonts, 'Position / Designation:', pos, x, y, 180, 5.5, 6)
-  labeledValue(page, fonts, 'Office / Department:', office, x + w * 0.5, y, 160, 5.5, 6)
-  y -= 12
-  labeledValue(page, fonts, 'personally appeared at', loc, x, y, w - 130, 5.5, 6)
+  y -= 10
+  labeledValue(page, fonts, 'Position / Designation:', pos, x, y, 180, 5, 5.5)
+  labeledValue(page, fonts, 'Office / Department:', office, x + w * 0.5, y, 160, 5, 5.5)
+  y -= 10
+  labeledValue(page, fonts, 'personally appeared at', loc, x, y, w - 130, 5, 5.5)
   page.drawText('(Location / Address)', {
     x: x + w - 92,
     y,
-    size: 4.4,
+    size: 4.2,
     font: fonts.regular,
     color: GRAY,
   })
-  y -= 12
-  labeledValue(page, fonts, 'for the purpose of', purpose, x, y, w - 100, 5.5, 6)
-  y -= 11
+  y -= 10
+  labeledValue(page, fonts, 'for the purpose of', purpose, x, y, w - 100, 5, 5.5)
+  y -= 9
   page.drawText("in connection with the employee's authorized out-of-office/official business on:", {
     x,
     y,
-    size: 5.5,
+    size: 5,
     font: fonts.regular,
     color: BLACK,
   })
-  y -= 12
-  labeledValue(page, fonts, 'Date of Appearance:', data.dateOfAppearance || data.dateFrom, x, y, 70, 5.5, 6)
-  page.drawText('(YYYY-MM-DD)', { x: x + 148, y, size: 4.3, font: fonts.regular, color: GRAY })
-  labeledValue(page, fonts, 'Time of Appearance:', data.timeOfAppearance || data.timeFrom, x + 210, y, 48, 5.5, 6)
-  drawCheckbox(page, x + 360, y, 'AM', data.appearanceTimeAm ?? data.timeFromAm, fonts.regular, 5)
-  drawCheckbox(page, x + 398, y, 'PM', data.appearanceTimePm ?? data.timeFromPm, fonts.regular, 5)
-  y -= 12
-  labeledValue(page, fonts, 'Time of Departure:', data.timeOfDeparture || data.timeTo, x, y, 50, 5.5, 6)
-  drawCheckbox(page, x + 130, y, 'AM', data.departureTimeAm ?? data.timeToAm, fonts.regular, 5)
-  drawCheckbox(page, x + 168, y, 'PM', data.departureTimePm ?? data.timeToPm, fonts.regular, 5)
-  labeledValue(page, fonts, 'Purpose / Activity Undertaken:', data.activityUndertaken, x + 215, y, 200, 5.5, 6)
-  y -= 12
-  labeledValue(page, fonts, 'Remarks / Summary of Activity:', data.remarksSummary, x, y, w - 155, 5.5, 6)
-  y -= 12
+  y -= 10
+  labeledValue(page, fonts, 'Date of Appearance:', data.dateOfAppearance || data.dateFrom, x, y, 70, 5, 5.5)
+  page.drawText('(YYYY-MM-DD)', { x: x + 148, y, size: 4.2, font: fonts.regular, color: GRAY })
+  labeledValue(page, fonts, 'Time of Appearance:', data.timeOfAppearance || data.timeFrom, x + 210, y, 48, 5, 5.5)
+  drawCheckbox(page, x + 360, y, 'AM', data.appearanceTimeAm ?? data.timeFromAm, fonts.regular, 4.8)
+  drawCheckbox(page, x + 398, y, 'PM', data.appearanceTimePm ?? data.timeFromPm, fonts.regular, 4.8)
+  y -= 10
+  labeledValue(page, fonts, 'Time of Departure:', data.timeOfDeparture || data.timeTo, x, y, 50, 5, 5.5)
+  drawCheckbox(page, x + 130, y, 'AM', data.departureTimeAm ?? data.timeToAm, fonts.regular, 4.8)
+  drawCheckbox(page, x + 168, y, 'PM', data.departureTimePm ?? data.timeToPm, fonts.regular, 4.8)
+  labeledValue(page, fonts, 'Purpose / Activity Undertaken:', data.activityUndertaken, x + 215, y, 200, 5, 5.5)
+  y -= 10
+  labeledValue(page, fonts, 'Remarks / Summary of Activity:', data.remarksSummary, x, y, w - 155, 5, 5.5)
+  y -= 10
   const close =
     'This certification is issued upon the request of the above-named employee as proof of his/her personal appearance and participation in the stated official activity.'
-  for (const line of wrapText(close, fonts.italic, 5.2, w)) {
-    page.drawText(line, { x, y, size: 5.2, font: fonts.italic, color: BLACK })
-    y -= 7
+  for (const line of wrapText(close, fonts.italic, 4.8, w).slice(0, 2)) {
+    page.drawText(line, { x, y, size: 4.8, font: fonts.italic, color: BLACK })
+    y -= 6
   }
 
-  y -= 4
+  y -= 3
   const leftW = w * 0.48
   const rightW = w - leftW - 4
-  const boxH = 78
-  const boxBottom = Math.max(MARGIN + 52, y - boxH)
+  const boxH = 62
+  const boxBottom = Math.max(MARGIN + 42, y - boxH)
 
   page.drawRectangle({
     x,
@@ -570,17 +593,17 @@ function drawCertificate(
     borderWidth: 0.5,
   })
 
-  let ly = boxBottom + boxH - 10
-  page.drawText('EMPLOYEE ACKNOWLEDGMENT', { x: x + 5, y: ly, size: 6, font: fonts.bold, color: NAVY })
-  ly -= 9
+  let ly = boxBottom + boxH - 8
+  page.drawText('EMPLOYEE ACKNOWLEDGMENT', { x: x + 5, y: ly, size: 5.5, font: fonts.bold, color: NAVY })
+  ly -= 8
   page.drawText('I hereby certify that the information stated above is true and correct.', {
     x: x + 5,
     y: ly,
-    size: 4.6,
+    size: 4.3,
     font: fonts.regular,
     color: BLACK,
   })
-  const ackY = boxBottom + 18
+  const ackY = boxBottom + 16
   drawSigCaption(
     page,
     fonts,
@@ -590,11 +613,11 @@ function drawCertificate(
     ackY,
     leftW - 24,
   )
-  labeledValue(page, fonts, 'Date:', data.ackDate, x + 12, ackY - 12, 80, 5, 5.5)
+  labeledValue(page, fonts, 'Date:', data.ackDate, x + 12, ackY - 11, 80, 4.8, 5)
 
-  let ry = boxBottom + boxH - 10
-  page.drawText('CERTIFIED BY:', { x: x + leftW + 9, y: ry, size: 6, font: fonts.bold, color: NAVY })
-  const certY = boxBottom + boxH - 26
+  let ry = boxBottom + boxH - 8
+  page.drawText('CERTIFIED BY:', { x: x + leftW + 9, y: ry, size: 5.5, font: fonts.bold, color: NAVY })
+  const certY = boxBottom + boxH - 22
   drawSigCaption(
     page,
     fonts,
@@ -604,10 +627,10 @@ function drawCertificate(
     certY,
     rightW - 28,
   )
-  labeledValue(page, fonts, 'Position / Designation:', data.certifiedByPosition, x + leftW + 8, certY - 12, 120, 4.8, 5)
-  labeledValue(page, fonts, 'Office / Agency / Organization:', data.certifiedByOffice, x + leftW + 8, certY - 22, 100, 4.8, 5)
-  labeledValue(page, fonts, 'Date:', data.certifiedByDate, x + leftW + 8, certY - 32, 50, 4.8, 5)
-  labeledValue(page, fonts, 'Contact No.:', data.certifiedByContact, x + leftW + 110, certY - 32, 70, 4.8, 5)
+  labeledValue(page, fonts, 'Position / Designation:', data.certifiedByPosition, x + leftW + 8, certY - 11, 120, 4.5, 5)
+  labeledValue(page, fonts, 'Office / Agency / Organization:', data.certifiedByOffice, x + leftW + 8, certY - 20, 100, 4.5, 5)
+  labeledValue(page, fonts, 'Date:', data.certifiedByDate, x + leftW + 8, certY - 29, 50, 4.5, 5)
+  labeledValue(page, fonts, 'Contact No.:', data.certifiedByContact, x + leftW + 110, certY - 29, 70, 4.5, 5)
 
   // HRMO use
   const hrmoY = boxBottom - 4
