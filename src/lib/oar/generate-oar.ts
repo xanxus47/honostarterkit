@@ -30,20 +30,53 @@ type Fonts = {
   italic: PDFFont
 }
 
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean)
-  if (words.length === 0) return []
-  const lines: string[] = []
-  let current = words[0]!
-  for (let i = 1; i < words.length; i++) {
-    const next = `${current} ${words[i]}`
-    if (font.widthOfTextAtSize(next, size) <= maxWidth) current = next
-    else {
-      lines.push(current)
-      current = words[i]!
+function splitLongToken(token: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  if (font.widthOfTextAtSize(token, size) <= maxWidth) return [token]
+  const parts: string[] = []
+  let current = ''
+  for (const ch of token) {
+    const next = current + ch
+    if (current && font.widthOfTextAtSize(next, size) > maxWidth) {
+      parts.push(current)
+      current = ch
+    } else {
+      current = next
     }
   }
-  lines.push(current)
+  if (current) parts.push(current)
+  return parts
+}
+
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  if (!text.trim()) return []
+  const lines: string[] = []
+
+  for (const paragraph of text.replace(/\r\n/g, '\n').split('\n')) {
+    const tokens = paragraph.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean)
+    if (tokens.length === 0) {
+      lines.push('')
+      continue
+    }
+
+    let current = ''
+    for (const token of tokens) {
+      for (const piece of splitLongToken(token, font, size, maxWidth)) {
+        if (!current) {
+          current = piece
+          continue
+        }
+        const candidate = `${current} ${piece}`
+        if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+          current = candidate
+        } else {
+          lines.push(current)
+          current = piece
+        }
+      }
+    }
+    if (current) lines.push(current)
+  }
+
   return lines
 }
 
@@ -611,14 +644,10 @@ function drawCertifications(page: PDFPage, fonts: Fonts, data: OarFormData, topY
   }
   ey = bottom + 36
   drawUnderline(page, x + 18, ey, colW - 36)
-  drawValue(page, data.employeeSignatureName, x + 20, ey + 2, fonts.regular, 8, colW - 40)
-  page.drawText('Employee Signature', {
-    x: x + 18,
-    y: ey - 10,
-    size: 6.5,
-    font: fonts.regular,
-    color: GRAY,
-  })
+  if (data.employeeSignatureName) {
+    drawCentered(page, data.employeeSignatureName, ey + 2, fonts.regular, 8, BLACK, x + 18, x + colW - 18)
+  }
+  drawCentered(page, 'Employee Signature', ey - 10, fonts.regular, 6.5, GRAY, x, x + colW)
   ey = bottom + 12
   page.drawText('Date:', { x: x + 18, y: ey, size: 7.5, font: fonts.regular, color: BLACK })
   drawUnderline(page, x + 40, ey - 1, colW - 58)
@@ -643,14 +672,19 @@ function drawCertifications(page: PDFPage, fonts: Fonts, data: OarFormData, topY
   }
   sy = bottom + 42
   drawUnderline(page, sx + 14, sy, colW - 28)
-  drawValue(page, data.supervisorSignatureName, sx + 16, sy + 2, fonts.regular, 8, colW - 32)
-  page.drawText('Supervisor Signature over Printed Name', {
-    x: sx + 14,
-    y: sy - 10,
-    size: 6,
-    font: fonts.regular,
-    color: GRAY,
-  })
+  if (data.supervisorSignatureName) {
+    drawCentered(page, data.supervisorSignatureName, sy + 2, fonts.regular, 8, BLACK, sx + 14, sx + colW - 14)
+  }
+  drawCentered(
+    page,
+    'Supervisor Signature over Printed Name',
+    sy - 10,
+    fonts.regular,
+    6,
+    GRAY,
+    sx,
+    sx + colW,
+  )
   sy = bottom + 12
   const posLineW = colW * 0.55 - 55
   page.drawText('Position:', { x: sx + 10, y: sy, size: 7, font: fonts.regular, color: BLACK })
