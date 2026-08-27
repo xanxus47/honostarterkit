@@ -1,6 +1,8 @@
 import { Hono, type Context } from 'hono'
 import logoBytes from '../../assets/LGU-otaf.png'
+import { parsePunchPayload, withAttendance } from '../lib/dtr/from-attendance'
 import { generateDtrPdf } from '../lib/dtr/generate-dtr'
+import { addPunches, listPunches } from '../lib/dtr/punch-store'
 import { createDtr, deleteDtr, getDtr, listDtr, updateDtr } from '../lib/dtr/store'
 import type { DtrDayEntry, DtrFormData, EmploymentStatus } from '../lib/dtr/types'
 
@@ -98,6 +100,15 @@ function parseDtrData(
     if (!sparse || Object.prototype.hasOwnProperty.call(source, 'days')) {
       data.days = parseDays(source.days)
     }
+    if (!sparse || Object.prototype.hasOwnProperty.call(source, 'fillFromAttendance')) {
+      const flag = source.fillFromAttendance
+      if (typeof flag === 'boolean') data.fillFromAttendance = flag
+      else if (flag === 'true' || flag === 'on' || flag === '1') data.fillFromAttendance = true
+      else if (flag === 'false' || flag === '0') data.fillFromAttendance = false
+    }
+  } else if (!sparse && source.has('fillFromAttendance')) {
+    const flags = source.getAll('fillFromAttendance').map(String)
+    data.fillFromAttendance = flags.some((v) => v === 'true' || v === 'on' || v === '1')
   }
 
   return data
@@ -105,16 +116,27 @@ function parseDtrData(
 
 async function readBody(c: Context, opts?: { sparse?: boolean }): Promise<DtrFormData> {
   const contentType = c.req.header('content-type') || ''
+  let data: DtrFormData
+  let inline: ReturnType<typeof parsePunchPayload> = []
   if (contentType.includes('application/json')) {
-    return parseDtrData((await c.req.json()) as Record<string, unknown>, opts)
-  }
-  if (
+    const raw = (await c.req.json()) as Record<string, unknown>
+    data = parseDtrData(raw, opts)
+    inline = parsePunchPayload(raw.punches ?? [])
+    if (inline.length) addPunches(inline)
+  } else if (
     contentType.includes('application/x-www-form-urlencoded') ||
     contentType.includes('multipart/form-data')
   ) {
-    return parseDtrData(await c.req.formData(), opts)
+    data = parseDtrData(await c.req.formData(), opts)
+  } else {
+    data = parseDtrData(c.req.query(), opts)
   }
-  return parseDtrData(c.req.query(), opts)
+
+  if (opts?.sparse && data.fillFromAttendance !== true) {
+    const { fillFromAttendance: _flag, ...rest } = data
+    return rest
+  }
+  return withAttendance(data, inline)
 }
 
 async function pdfResponse(data: DtrFormData) {
@@ -175,7 +197,7 @@ function formPage(): string {
 <body>
   <main>
     <h1>Daily Time Record (DTR)</h1>
-    <p class="sub">Fill details, save a record, or download the A4 PDF. Day rows can be sent via JSON API.</p>
+    <p class="sub">Fill employee and period, save a record, or download the A4 PDF. Clock-ins from ZKTeco fill DATE, DAY, AM/PM, hours, and undertime. Overtime stays blank.</p>
 
     <div class="panel">
       <strong>CRUD API</strong>
@@ -188,6 +210,8 @@ function formPage(): string {
         <li><code>DELETE /dtr/:id</code> — delete</li>
         <li><code>GET /dtr/:id/pdf</code> — PDF for saved record</li>
         <li><code>POST /dtr/download</code> — PDF without saving</li>
+        <li><code>POST /dtr/attendance/punches</code> — ingest ZKTeco / BioTime punches</li>
+        <li><code>GET /dtr/attendance/preview?employeeId=&amp;periodFrom=&amp;periodTo=</code> — preview auto-filled rows</li>
       </ul>
     </div>
 
@@ -226,6 +250,11 @@ function formPage(): string {
           <label>To <input name="periodTo" placeholder="YYYY-MM-DD" /></label>
           <label>No. of Days <input name="numberOfDays" /></label>
         </div>
+        <input type="hidden" name="fillFromAttendance" value="false" />
+        <label style="margin-top:10px;flex-direction:row;align-items:center;font-weight:600;">
+          <input type="checkbox" name="fillFromAttendance" value="true" checked />
+          Auto-fill DATE, DAY, AM/PM IN-OUT, total hours, and undertime from attendance punches (overtime excluded)
+        </label>
       </fieldset>
 
       <fieldset>
@@ -263,8 +292,39 @@ function formPage(): string {
 dtr.get('/form', (c) => c.html(formPage()))
 dtr.get('/ui', (c) => c.html(formPage()))
 
-dtr.get('/download', async (c) => pdfResponse(parseDtrData(c.req.query())))
+dtr.get('/download', async (c) => pdfResponse(withAttendance(parseDtrData(c.req.query()))))
 dtr.post('/download', async (c) => pdfResponse(await readBody(c)))
+
+dtr.post('/attendance/punches', async (c) => {
+  const raw = await c.req.json().catch(() => null)
+  const punches = addPunches(parsePunchPayload(raw))
+  return c.json({ data: punches, stored: punches.length }, 201)
+})
+
+dtr.get('/attendance/punches', (c) => {
+  return c.json({
+    data: listPunches({
+      employeeId: c.req.query('employeeId'),
+      from: c.req.query('from'),
+      to: c.req.query('to'),
+    }),
+  })
+})
+
+dtr.get('/attendance/preview', (c) => {
+  const employeeId = c.req.query('employeeId')
+  const periodFrom = c.req.query('periodFrom')
+  if (!employeeId || !periodFrom) {
+    return c.json({ error: 'employeeId and periodFrom are required' }, 400)
+  }
+  const data = withAttendance({
+    employeeId,
+    periodTo: c.req.query('periodTo'),
+    periodFrom,
+    fillFromAttendance: true,
+  })
+  return c.json({ data })
+})
 
 dtr.get('/', (c) => c.json({ data: listDtr() }))
 
@@ -295,7 +355,11 @@ dtr.patch('/:id', async (c) => {
   const existing = getDtr(id)
   if (!existing) return c.json({ error: 'Not found' }, 404)
   const patch = await readBody(c, { sparse: true })
-  const record = updateDtr(id, { ...existing, ...patch })
+  const merged = { ...existing, ...patch }
+  const record = updateDtr(
+    id,
+    patch.fillFromAttendance === true ? withAttendance({ ...merged, fillFromAttendance: true }) : merged,
+  )
   return c.json({ data: record })
 })
 

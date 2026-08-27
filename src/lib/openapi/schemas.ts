@@ -253,6 +253,7 @@ export const DtrBody = withMeta(
       periodTo: s,
       numberOfDays: s,
       days: z.array(DtrDayEntry).optional(),
+      fillFromAttendance: b,
       totalHoursWorked: s,
       totalOvertime: s,
       totalUndertime: s,
@@ -477,7 +478,25 @@ export const LocatorBody = withMeta(
   'LocatorForm',
 )
 
-export function recordSchema<T extends z.ZodType>(body: T, name: string) {
+export const AttendancePunch = z
+  .object({
+    employeeId: z.string(),
+    punchedAt: z.string().describe('ISO-8601 or "YYYY-MM-DD HH:mm:ss" (Asia/Manila)'),
+  })
+  .openapi('AttendancePunch')
+
+export const AttendancePunchBatch = z
+  .object({
+    punches: z.array(AttendancePunch).optional(),
+  })
+  .passthrough()
+  .openapi('AttendancePunchBatch')
+
+export const AttendancePreviewQuery = z.object({
+  employeeId: z.string(),
+  periodFrom: z.string(),
+  periodTo: z.string().optional(),
+})
   return z
     .object({
       id: z.string().uuid(),

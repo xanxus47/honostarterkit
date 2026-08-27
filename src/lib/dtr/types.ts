@@ -34,6 +34,9 @@ export type DtrFormData = {
   /** Up to 31 day rows */
   days?: DtrDayEntry[]
 
+  /** When true, AM/PM, hours, and undertime are built from stored punches. Overtime columns stay empty. */
+  fillFromAttendance?: boolean
+
   totalHoursWorked?: string
   totalOvertime?: string
   totalUndertime?: string

@@ -2,6 +2,8 @@ import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi'
 import {
   AcrBody,
   AcrRecord,
+  AttendancePreviewQuery,
+  AttendancePunchBatch,
   CtoBody,
   CtoRecord,
   DtrBody,
@@ -322,6 +324,36 @@ export function registerOpenApi(app: OpenAPIHono) {
     body: DtrBody,
     record: DtrRecord,
   })
+
+  app.openAPIRegistry.registerPath(
+    createRoute({
+      method: 'post',
+      path: '/dtr/attendance/punches',
+      tags: ['DTR'],
+      summary: 'Ingest ZKTeco / BioTime punch logs',
+      request: { body: { required: true, ...jsonBody(AttendancePunchBatch) } },
+      responses: { 201: { description: 'Stored punches', ...jsonBody(z.object({ data: z.array(z.unknown()) })) } },
+    }),
+  )
+  app.openAPIRegistry.registerPath(
+    createRoute({
+      method: 'get',
+      path: '/dtr/attendance/punches',
+      tags: ['DTR'],
+      summary: 'List stored punch logs',
+      responses: { 200: { description: 'Punch list', ...jsonBody(z.object({ data: z.array(z.unknown()) })) } },
+    }),
+  )
+  app.openAPIRegistry.registerPath(
+    createRoute({
+      method: 'get',
+      path: '/dtr/attendance/preview',
+      tags: ['DTR'],
+      summary: 'Preview DTR day rows from punches (no overtime)',
+      request: { query: AttendancePreviewQuery },
+      responses: { 200: { description: 'Computed DTR days', ...jsonBody(z.object({ data: DtrBody })) } },
+    }),
+  )
 
   registerDownloadAndForm(app, {
     tag: 'ACR',
