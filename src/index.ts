@@ -1,6 +1,7 @@
 import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { registerOpenApi } from './lib/openapi/register'
+import type { AppBindings } from './lib/db'
 import acr from './routes/acr'
 import cto from './routes/cto'
 import dtr from './routes/dtr'
@@ -10,7 +11,7 @@ import ocf from './routes/ocf'
 import otc from './routes/otc'
 import otaf from './routes/otaf'
 
-const app = new OpenAPIHono()
+const app = new OpenAPIHono<{ Bindings: AppBindings }>()
 
 app.get('/', (c) => {
   return c.text('Hello Hono! Docs: /docs  Spec: /doc')

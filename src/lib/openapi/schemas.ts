@@ -497,6 +497,8 @@ export const AttendancePreviewQuery = z.object({
   periodFrom: z.string(),
   periodTo: z.string().optional(),
 })
+
+export function recordSchema<T extends z.ZodType>(body: T, name: string) {
   return z
     .object({
       id: z.string().uuid(),

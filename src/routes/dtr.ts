@@ -1,12 +1,19 @@
 import { Hono, type Context } from 'hono'
 import logoBytes from '../../assets/LGU-otaf.png'
+import { getSql, type AppBindings } from '../lib/db'
 import { parsePunchPayload, withAttendance } from '../lib/dtr/from-attendance'
 import { generateDtrPdf } from '../lib/dtr/generate-dtr'
 import { addPunches, listPunches } from '../lib/dtr/punch-store'
 import { createDtr, deleteDtr, getDtr, listDtr, updateDtr } from '../lib/dtr/store'
 import type { DtrDayEntry, DtrFormData, EmploymentStatus } from '../lib/dtr/types'
 
-const dtr = new Hono()
+const dtr = new Hono<{ Bindings: AppBindings }>()
+
+type DtrContext = Context<{ Bindings: AppBindings }>
+
+function sqlOf(c: DtrContext) {
+  return c.env.DATABASE_URL ? getSql(c.env.DATABASE_URL) : undefined
+}
 
 const FIELD_KEYS: (keyof DtrFormData)[] = [
   'controlNumber',
@@ -114,15 +121,16 @@ function parseDtrData(
   return data
 }
 
-async function readBody(c: Context, opts?: { sparse?: boolean }): Promise<DtrFormData> {
+async function readBody(c: DtrContext, opts?: { sparse?: boolean }): Promise<DtrFormData> {
   const contentType = c.req.header('content-type') || ''
   let data: DtrFormData
   let inline: ReturnType<typeof parsePunchPayload> = []
+  const sql = sqlOf(c)
   if (contentType.includes('application/json')) {
     const raw = (await c.req.json()) as Record<string, unknown>
     data = parseDtrData(raw, opts)
     inline = parsePunchPayload(raw.punches ?? [])
-    if (inline.length) addPunches(inline)
+    if (inline.length && sql) await addPunches(sql, inline)
   } else if (
     contentType.includes('application/x-www-form-urlencoded') ||
     contentType.includes('multipart/form-data')
@@ -136,7 +144,7 @@ async function readBody(c: Context, opts?: { sparse?: boolean }): Promise<DtrFor
     const { fillFromAttendance: _flag, ...rest } = data
     return rest
   }
-  return withAttendance(data, inline)
+  return withAttendance(data, inline, sql)
 }
 
 async function pdfResponse(data: DtrFormData) {
@@ -210,8 +218,8 @@ function formPage(): string {
         <li><code>DELETE /dtr/:id</code> — delete</li>
         <li><code>GET /dtr/:id/pdf</code> — PDF for saved record</li>
         <li><code>POST /dtr/download</code> — PDF without saving</li>
-        <li><code>POST /dtr/attendance/punches</code> — ingest ZKTeco / BioTime punches</li>
-        <li><code>GET /dtr/attendance/preview?employeeId=&amp;periodFrom=&amp;periodTo=</code> — preview auto-filled rows</li>
+        <li><code>GET /dtr/attendance/punches</code> — punches from Neon (<code>user_id</code> 1 and 2)</li>
+        <li><code>GET /dtr/attendance/preview?employeeId=2&amp;periodFrom=2026-08-01&amp;periodTo=2026-08-31</code> — preview auto-filled rows</li>
       </ul>
     </div>
 
@@ -246,7 +254,7 @@ function formPage(): string {
       <fieldset>
         <legend>Period Covered</legend>
         <div class="grid four">
-          <label>From <input name="periodFrom" placeholder="YYYY-MM-DD" /></label>
+          <label>From <input name="periodFrom" placeholder="YYYY-MM-DD (blank = month of Date)" /></label>
           <label>To <input name="periodTo" placeholder="YYYY-MM-DD" /></label>
           <label>No. of Days <input name="numberOfDays" /></label>
         </div>
@@ -292,18 +300,24 @@ function formPage(): string {
 dtr.get('/form', (c) => c.html(formPage()))
 dtr.get('/ui', (c) => c.html(formPage()))
 
-dtr.get('/download', async (c) => pdfResponse(withAttendance(parseDtrData(c.req.query()))))
+dtr.get('/download', async (c) =>
+  pdfResponse(await withAttendance(parseDtrData(c.req.query()), [], sqlOf(c))),
+)
 dtr.post('/download', async (c) => pdfResponse(await readBody(c)))
 
 dtr.post('/attendance/punches', async (c) => {
+  const sql = sqlOf(c)
+  if (!sql) return c.json({ error: 'DATABASE_URL is not configured' }, 500)
   const raw = await c.req.json().catch(() => null)
-  const punches = addPunches(parsePunchPayload(raw))
+  const punches = await addPunches(sql, parsePunchPayload(raw))
   return c.json({ data: punches, stored: punches.length }, 201)
 })
 
-dtr.get('/attendance/punches', (c) => {
+dtr.get('/attendance/punches', async (c) => {
+  const sql = sqlOf(c)
+  if (!sql) return c.json({ error: 'DATABASE_URL is not configured' }, 500)
   return c.json({
-    data: listPunches({
+    data: await listPunches(sql, {
       employeeId: c.req.query('employeeId'),
       from: c.req.query('from'),
       to: c.req.query('to'),
@@ -311,18 +325,24 @@ dtr.get('/attendance/punches', (c) => {
   })
 })
 
-dtr.get('/attendance/preview', (c) => {
+dtr.get('/attendance/preview', async (c) => {
   const employeeId = c.req.query('employeeId')
   const periodFrom = c.req.query('periodFrom')
   if (!employeeId || !periodFrom) {
     return c.json({ error: 'employeeId and periodFrom are required' }, 400)
   }
-  const data = withAttendance({
-    employeeId,
-    periodTo: c.req.query('periodTo'),
-    periodFrom,
-    fillFromAttendance: true,
-  })
+  const sql = sqlOf(c)
+  if (!sql) return c.json({ error: 'DATABASE_URL is not configured' }, 500)
+  const data = await withAttendance(
+    {
+      employeeId,
+      periodTo: c.req.query('periodTo'),
+      periodFrom,
+      fillFromAttendance: true,
+    },
+    [],
+    sql,
+  )
   return c.json({ data })
 })
 
@@ -358,7 +378,9 @@ dtr.patch('/:id', async (c) => {
   const merged = { ...existing, ...patch }
   const record = updateDtr(
     id,
-    patch.fillFromAttendance === true ? withAttendance({ ...merged, fillFromAttendance: true }) : merged,
+    patch.fillFromAttendance === true
+      ? await withAttendance({ ...merged, fillFromAttendance: true }, [], sqlOf(c))
+      : merged,
   )
   return c.json({ data: record })
 })

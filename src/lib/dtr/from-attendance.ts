@@ -1,4 +1,5 @@
-import { punchesForEmployee, type AttendancePunch } from './punch-store'
+import { getEmployee, punchesForEmployee, type AttendancePunch } from './punch-store'
+import type { Sql } from '../db'
 import type { DtrDayEntry, DtrFormData } from './types'
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
@@ -64,6 +65,34 @@ export function dayNameFor(periodFrom: string | undefined, dayOfMonth: number): 
   const date = new Date(parsed.year, parsed.month - 1, dayOfMonth)
   if (date.getMonth() !== parsed.month - 1) return ''
   return DAY_NAMES[date.getDay()]!
+}
+
+function monthRange(year: number, month: number): { periodFrom: string; periodTo: string } {
+  const last = new Date(year, month, 0).getDate()
+  return {
+    periodFrom: `${year}-${pad2(month)}-01`,
+    periodTo: `${year}-${pad2(month)}-${pad2(last)}`,
+  }
+}
+
+function inferPeriod(data: DtrFormData, punches: AttendancePunch[]): { periodFrom: string; periodTo: string } | undefined {
+  const from = parseYmd(data.periodFrom)
+  if (from) {
+    const fallback = monthRange(from.year, from.month)
+    return {
+      periodFrom: data.periodFrom!.trim().slice(0, 10),
+      periodTo: data.periodTo?.trim().slice(0, 10) || fallback.periodTo,
+    }
+  }
+  const issued = parseYmd(data.dateIssued)
+  if (issued) return monthRange(issued.year, issued.month)
+  for (let i = punches.length - 1; i >= 0; i--) {
+    const at = new Date(punches[i]!.punchedAt)
+    if (Number.isNaN(at.getTime())) continue
+    const parts = manilaParts(at)
+    return monthRange(parts.year, parts.month)
+  }
+  return undefined
 }
 
 function inPeriod(ymd: string, periodFrom?: string, periodTo?: string) {
@@ -170,9 +199,11 @@ export function buildDaysFromPunches(
 }
 
 export function applyAttendanceToDtr(data: DtrFormData, punches: AttendancePunch[]): DtrFormData {
-  if (!data.employeeId || !data.periodFrom) return data
-  const days = buildDaysFromPunches(punches, data.periodFrom, data.periodTo)
-  if (!days.length) return data
+  if (!data.employeeId) return data
+  const coverage = inferPeriod(data, punches)
+  if (!coverage) return data
+  const days = buildDaysFromPunches(punches, coverage.periodFrom, coverage.periodTo)
+  if (!days.length) return { ...data, periodFrom: data.periodFrom || coverage.periodFrom, periodTo: data.periodTo || coverage.periodTo }
 
   let workedTotal = 0
   let undertimeTotal = 0
@@ -188,6 +219,8 @@ export function applyAttendanceToDtr(data: DtrFormData, punches: AttendancePunch
 
   return {
     ...data,
+    periodFrom: data.periodFrom || coverage.periodFrom,
+    periodTo: data.periodTo || coverage.periodTo,
     days,
     numberOfDays: data.numberOfDays || String(daysWithTime),
     totalHoursWorked: data.totalHoursWorked || (daysWithTime ? formatHours(workedTotal) : data.totalHoursWorked),
@@ -257,9 +290,21 @@ export function parsePunchPayload(raw: unknown): AttendancePunch[] {
   return single ? [single] : []
 }
 
-export function withAttendance(data: DtrFormData, extraPunches: AttendancePunch[] = []): DtrFormData {
+export async function withAttendance(
+  data: DtrFormData,
+  extraPunches: AttendancePunch[] = [],
+  sql?: Sql,
+): Promise<DtrFormData> {
   const { fillFromAttendance: _flag, ...rest } = data
   if (!shouldFillFromAttendance(data)) return rest
-  const stored = rest.employeeId ? punchesForEmployee(rest.employeeId) : []
+  const stored =
+    rest.employeeId && sql
+      ? await punchesForEmployee(sql, rest.employeeId, rest.periodFrom, rest.periodTo)
+      : []
+  if (rest.employeeId && sql && (!rest.employeeName || !rest.position)) {
+    const employee = await getEmployee(sql, rest.employeeId)
+    if (employee?.name && !rest.employeeName) rest.employeeName = employee.name
+    if (employee?.position && !rest.position) rest.position = employee.position
+  }
   return applyAttendanceToDtr(rest, [...stored, ...extraPunches])
 }
