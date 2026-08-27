@@ -279,11 +279,15 @@ function formPage(): string {
         <legend>Signatures</legend>
         <div class="grid">
           <label>Employee Signature Name <input name="employeeSignatureName" /></label>
-          <label>Employee Date <input name="employeeSignatureDate" /></label>
-          <label>Supervisor Name <input name="supervisorSignatureName" /></label>
-          <label>Supervisor Position <input name="supervisorPosition" /></label>
-          <label>Dept Head Name <input name="departmentHeadSignatureName" /></label>
+          <label>Employee Date <input name="employeeSignatureDate" placeholder="YYYY-MM-DD" /></label>
+          <label>Immediate Supervisor Name <input name="supervisorSignatureName" /></label>
+          <label>Immediate Supervisor Position <input name="supervisorPosition" /></label>
+          <label>Immediate Supervisor Date <input name="supervisorDate" placeholder="YYYY-MM-DD" /></label>
+          <label>Department Head Name <input name="departmentHeadSignatureName" /></label>
+          <label>Department Head Position <input name="departmentHeadPosition" /></label>
+          <label>Department Head Date <input name="departmentHeadDate" placeholder="YYYY-MM-DD" /></label>
           <label>HRMO Name <input name="hrmoSignatureName" /></label>
+          <label>HRMO Date <input name="hrmoDate" placeholder="YYYY-MM-DD" /></label>
         </div>
       </fieldset>
 
