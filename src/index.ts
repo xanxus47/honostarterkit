@@ -1,5 +1,6 @@
 import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
+import { corsMiddleware } from './lib/cors'
 import { registerOpenApi } from './lib/openapi/register'
 import type { AppBindings } from './lib/db'
 import acr from './routes/acr'
@@ -12,6 +13,8 @@ import otc from './routes/otc'
 import otaf from './routes/otaf'
 
 const app = new OpenAPIHono<{ Bindings: AppBindings }>()
+
+app.use('*', corsMiddleware())
 
 app.get('/', (c) => {
   return c.text('Hello Hono! Docs: /docs  Spec: /doc')
