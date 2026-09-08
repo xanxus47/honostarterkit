@@ -464,25 +464,27 @@ function drawPeriodCovered(page: PDFPage, fonts: Fonts, data: DtrFormData, topY:
 function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: number): number {
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
-  const barH = 11
-  const headerH = 16
-  const rowH = 9.2
+  const barH = 12
+  const headerH = 18
+  const rowH = 10.6
+  const cellSize = 9
+  const headerSize = 9
   const y = topY - barH
-  drawSectionBar(page, x, y, w, barH, '2. TIME RECORD', fonts.bold, 7)
+  drawSectionBar(page, x, y, w, barH, '2. TIME RECORD', fonts.bold, 9)
 
   // Column widths (must sum to w)
   const cols = {
     date: 22,
     day: 26,
-    amIn: 42,
-    amOut: 42,
-    pmIn: 42,
-    pmOut: 42,
-    otIn: 42,
-    otOut: 42,
-    undertime: 48,
-    total: 52,
-    remarks: w - 22 - 26 - 42 * 6 - 48 - 52,
+    amIn: 40,
+    amOut: 40,
+    pmIn: 40,
+    pmOut: 40,
+    otIn: 40,
+    otOut: 40,
+    undertime: 70,
+    total: 68,
+    remarks: w - 22 - 26 - 40 * 6 - 70 - 68,
   }
 
   const headerY = y - headerH
@@ -561,9 +563,9 @@ function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: nu
     drawCentered(
       page,
       g.label,
-      headerY + headerH / 2 + 1.5,
+      headerY + headerH / 2 + 2,
       fonts.bold,
-      5,
+      headerSize,
       NAVY,
       g.x,
       g.x + g.w,
@@ -654,7 +656,7 @@ function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: nu
       color: LIGHT_FILL,
     })
     if (s.label) {
-      drawCentered(page, s.label, headerY + 1.5, fonts.bold, 5, NAVY, s.x, s.x + s.w)
+      drawCentered(page, s.label, headerY + 2, fonts.bold, headerSize, NAVY, s.x, s.x + s.w)
     }
   }
 
@@ -701,9 +703,9 @@ function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: nu
       })
       const val = values[i]!
       if (val) {
-        drawCentered(page, val, rowY + 2.2, fonts.regular, 5.5, BLACK, cx, cx + cw)
+        drawCentered(page, val, rowY + 2.6, fonts.regular, cellSize, BLACK, cx, cx + cw)
       } else if (i >= 2 && i <= 7) {
-        drawCentered(page, '__:__', rowY + 2.2, fonts.regular, 5, GRAY, cx, cx + cw)
+        drawCentered(page, '__:__', rowY + 2.6, fonts.regular, cellSize, GRAY, cx, cx + cw)
       }
       cx += cw
     }
@@ -988,25 +990,24 @@ function drawReminders(page: PDFPage, fonts: Fonts, topY: number) {
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
   const barH = 11
-  const boxY = 14
-  const boxH = Math.max(48, topY - barH - boxY)
-  const barY = boxY + boxH - barH
+  const y = topY - barH
+  const bottom = MARGIN - 2
+  const bodyH = Math.max(36, y - bottom)
 
-  // Bell badge
-  page.drawCircle({ x: x + 8, y: barY + 5, size: 5.5, color: NAVY })
+  page.drawCircle({ x: x + 8, y: y + 5, size: 5.5, color: NAVY })
   page.drawText('!', {
     x: x + 6.6,
-    y: barY + 2.5,
+    y: y + 2.5,
     size: 7,
     font: fonts.bold,
     color: WHITE,
   })
-  drawSectionBar(page, x + 16, barY, w - 16, barH, 'REMINDERS', fonts.bold, 7)
+  drawSectionBar(page, x + 16, y, w - 16, barH, 'REMINDERS', fonts.bold, 7)
   page.drawRectangle({
     x,
-    y: boxY,
+    y: y - bodyH,
     width: w,
-    height: boxH - barH,
+    height: bodyH,
     borderColor: LINE_BLUE,
     borderWidth: 0.6,
   })
@@ -1019,9 +1020,11 @@ function drawReminders(page: PDFPage, fonts: Fonts, topY: number) {
     '5. Any erasures or alterations must be initialed by the employee and the approving authority.',
     '6. Keep this record as part of the official file.',
   ]
-  let ry = barY - 9
+  let ry = y - 9
+  const minY = y - bodyH + 4
   for (const note of reminders) {
     for (const line of wrapText(note, fonts.regular, 5.5, w - 12)) {
+      if (ry < minY) return
       page.drawText(line, { x: x + 5, y: ry, size: 5.5, font: fonts.regular, color: BLACK })
       ry -= 6.8
     }
