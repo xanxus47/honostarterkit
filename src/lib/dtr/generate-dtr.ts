@@ -637,8 +637,6 @@ function drawTimeRecord(
     const nextY = headerY - ((d + 1) * rowsArea) / rowCount
     const rowH = rowY - nextY
     const cellSize = Math.min(7.5, Math.max(6.5, rowH - 4))
-    const compactSize = 5
-    const compactY = nextY + (rowH - compactSize) / 2 + 0.3
     const textY = nextY + (rowH - cellSize) / 2 + 0.4
     const values = [
       String(day.day),
@@ -678,13 +676,10 @@ function drawTimeRecord(
         borderWidth: 0.4,
       })
       const val = values[i]!
-      const isCompact = i <= 7
-      const size = isCompact ? compactSize : cellSize
-      const ty = isCompact ? compactY : textY
       if (val) {
-        drawCentered(page, val, ty, fonts.regular, size, BLACK, cx, cx + cw)
+        drawCentered(page, val, textY, fonts.regular, cellSize, BLACK, cx, cx + cw)
       } else if (i >= 2 && i <= 7) {
-        drawCentered(page, '__:__', ty, fonts.regular, size, GRAY, cx, cx + cw)
+        drawCentered(page, '__:__', textY, fonts.regular, cellSize, GRAY, cx, cx + cw)
       }
       cx += cw
     }
