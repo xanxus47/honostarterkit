@@ -13,6 +13,20 @@ import type { DtrDayEntry, DtrFormData, EmploymentStatus } from './types'
 const PAGE_W = 595
 const PAGE_H = 842
 const MARGIN = 18
+const SECTION_GAP = 2
+const SECTION_BAR_H = 11
+const SUMMARY_BODY_H = 18
+const CERT_BAR_H = 11
+const CERT_BODY_H = 76
+/** Height consumed after the time-record table: gaps + summary + two certification rows. */
+const AFTER_TIME_RECORD_H =
+  SECTION_GAP +
+  SECTION_BAR_H +
+  SUMMARY_BODY_H +
+  SECTION_GAP +
+  (CERT_BAR_H + CERT_BODY_H) +
+  SECTION_GAP +
+  (CERT_BAR_H + CERT_BODY_H)
 
 const NAVY = rgb(0.08, 0.2, 0.4)
 const TITLE_BLUE = rgb(0.1, 0.28, 0.55)
@@ -29,23 +43,6 @@ type Fonts = {
   regular: PDFFont
   bold: PDFFont
   italic: PDFFont
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean)
-  if (words.length === 0) return []
-  const lines: string[] = []
-  let current = words[0]!
-  for (let i = 1; i < words.length; i++) {
-    const next = `${current} ${words[i]}`
-    if (font.widthOfTextAtSize(next, size) <= maxWidth) current = next
-    else {
-      lines.push(current)
-      current = words[i]!
-    }
-  }
-  lines.push(current)
-  return lines
 }
 
 function drawCentered(
@@ -161,37 +158,6 @@ function normalizeDays(data: DtrFormData): DtrDayEntry[] {
   return rows
 }
 
-function drawCenteredOnLine(
-  page: PDFPage,
-  fonts: Fonts,
-  value: string | undefined,
-  label: string,
-  lineX: number,
-  lineY: number,
-  lineW: number,
-) {
-  drawUnderline(page, lineX, lineY, lineW)
-  if (value) {
-    const size = 7
-    const vw = fonts.regular.widthOfTextAtSize(value, size)
-    page.drawText(value, {
-      x: lineX + (lineW - vw) / 2,
-      y: lineY + 2,
-      size,
-      font: fonts.regular,
-      color: BLACK,
-    })
-  }
-  const lw = fonts.regular.widthOfTextAtSize(label, 5.5)
-  page.drawText(label, {
-    x: lineX + (lineW - lw) / 2,
-    y: lineY - 8,
-    size: 5.5,
-    font: fonts.regular,
-    color: GRAY,
-  })
-}
-
 export async function generateDtrPdf(
   data: DtrFormData,
   logoBytes: ArrayBuffer | Uint8Array,
@@ -218,13 +184,11 @@ export async function generateDtrPdf(
   drawHeader(page, fonts, logo, controlNumber, data.dateIssued)
   let y = PAGE_H - 102
   y = drawEmployeeInfo(page, fonts, data, y)
-  y = drawPeriodCovered(page, fonts, data, y - 2)
-  y = drawTimeRecord(page, fonts, data, y - 2)
-  y = drawSummary(page, fonts, data, y - 2)
-  y = drawEmployeeCertification(page, fonts, data, y - 2)
-  y = drawApprovals(page, fonts, data, y - 2)
-  y = drawHrmoVerification(page, fonts, data, y - 2)
-  drawReminders(page, fonts, y - 2)
+  y = drawPeriodCovered(page, fonts, data, y - SECTION_GAP)
+  y = drawTimeRecord(page, fonts, data, y - SECTION_GAP, MARGIN + AFTER_TIME_RECORD_H)
+  y = drawSummary(page, fonts, data, y - SECTION_GAP)
+  y = drawEmployeeCertification(page, fonts, data, y - SECTION_GAP)
+  y = drawApprovals(page, fonts, data, y - SECTION_GAP)
 
   pdf.setTitle(`DTR ${controlNumber}`)
   pdf.setAuthor('Municipality of Magsaysay HR & Payroll')
@@ -328,7 +292,7 @@ function drawEmployeeInfo(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: 
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
   const barH = 11
-  const rowH = 20
+  const rowH = 26
   const y = topY - barH
   drawSectionBar(page, x, y, w, barH, '1. EMPLOYEE INFORMATION', fonts.bold, 7)
 
@@ -360,22 +324,22 @@ function drawEmployeeInfo(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: 
 
     page.drawText(rows[r]![0], {
       x: x + 3,
-      y: cy + rowH - 8,
-      size: 5.5,
+      y: cy + rowH - 9,
+      size: 6,
       font: fonts.bold,
       color: NAVY,
     })
     if (r === 2) {
       // Employment status checkboxes
       const status = data.employmentStatus
-      drawCheckbox(page, x + 4, cy + 3, 'Permanent', status === 'permanent', fonts.regular)
-      drawCheckbox(page, x + 62, cy + 3, 'Job Order', status === 'jobOrder', fonts.regular)
-      drawCheckbox(page, x + 118, cy + 3, 'Contract of Service', status === 'contractOfService', fonts.regular)
+      drawCheckbox(page, x + 4, cy + 5, 'Permanent', status === 'permanent', fonts.regular)
+      drawCheckbox(page, x + 62, cy + 5, 'Job Order', status === 'jobOrder', fonts.regular)
+      drawCheckbox(page, x + 118, cy + 5, 'Contract of Service', status === 'contractOfService', fonts.regular)
     } else if (rows[r]![1]) {
       page.drawText(String(rows[r]![1]), {
         x: x + 4,
-        y: cy + 4,
-        size: 7.5,
+        y: cy + 6,
+        size: 8.5,
         font: fonts.regular,
         color: BLACK,
       })
@@ -383,16 +347,16 @@ function drawEmployeeInfo(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: 
 
     page.drawText(rows[r]![2], {
       x: x + colW + 3,
-      y: cy + rowH - 8,
-      size: 5.5,
+      y: cy + rowH - 9,
+      size: 6,
       font: fonts.bold,
       color: NAVY,
     })
     if (rows[r]![3]) {
       page.drawText(String(rows[r]![3]), {
         x: x + colW + 4,
-        y: cy + 4,
-        size: 7.5,
+        y: cy + 6,
+        size: 8.5,
         font: fonts.regular,
         color: BLACK,
       })
@@ -461,14 +425,18 @@ function drawPeriodCovered(page: PDFPage, fonts: Fonts, data: DtrFormData, topY:
   return y
 }
 
-function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: number): number {
+function drawTimeRecord(
+  page: PDFPage,
+  fonts: Fonts,
+  data: DtrFormData,
+  topY: number,
+  bottomY: number,
+): number {
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
   const barH = 12
   const headerH = 18
-  const rowH = 10.6
-  const cellSize = 9
-  const headerSize = 9
+  const headerSize = 6.5
   const y = topY - barH
   drawSectionBar(page, x, y, w, barH, '2. TIME RECORD', fonts.bold, 9)
 
@@ -661,9 +629,17 @@ function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: nu
   }
 
   const days = normalizeDays(data)
+  const rowCount = days.length
+  const rowsArea = headerY - bottomY
   let rowY = headerY
-  for (const day of days) {
-    rowY -= rowH
+  for (let d = 0; d < rowCount; d++) {
+    const day = days[d]!
+    const nextY = headerY - ((d + 1) * rowsArea) / rowCount
+    const rowH = rowY - nextY
+    const cellSize = Math.min(7.5, Math.max(6.5, rowH - 4))
+    const compactSize = 5
+    const compactY = nextY + (rowH - compactSize) / 2 + 0.3
+    const textY = nextY + (rowH - cellSize) / 2 + 0.4
     const values = [
       String(day.day),
       day.dayName || '',
@@ -695,20 +671,24 @@ function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: nu
       const cw = widths[i]!
       page.drawRectangle({
         x: cx,
-        y: rowY,
+        y: nextY,
         width: cw,
         height: rowH,
         borderColor: LINE_BLUE,
         borderWidth: 0.4,
       })
       const val = values[i]!
+      const isCompact = i <= 7
+      const size = isCompact ? compactSize : cellSize
+      const ty = isCompact ? compactY : textY
       if (val) {
-        drawCentered(page, val, rowY + 2.6, fonts.regular, cellSize, BLACK, cx, cx + cw)
+        drawCentered(page, val, ty, fonts.regular, size, BLACK, cx, cx + cw)
       } else if (i >= 2 && i <= 7) {
-        drawCentered(page, '__:__', rowY + 2.6, fonts.regular, cellSize, GRAY, cx, cx + cw)
+        drawCentered(page, '__:__', ty, fonts.regular, size, GRAY, cx, cx + cw)
       }
       cx += cw
     }
+    rowY = nextY
   }
 
   return rowY
@@ -717,8 +697,8 @@ function drawTimeRecord(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: nu
 function drawSummary(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: number): number {
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
-  const barH = 11
-  const bodyH = 18
+  const barH = SECTION_BAR_H
+  const bodyH = SUMMARY_BODY_H
   const y = topY - barH
   drawSectionBar(page, x, y, w, barH, '3. SUMMARY', fonts.bold, 7)
   page.drawRectangle({
@@ -771,61 +751,31 @@ function drawEmployeeCertification(
 ): number {
   const x = MARGIN
   const w = PAGE_W - MARGIN * 2
-  const barH = 11
-  const bodyH = 44
-  const y = topY - barH
-  drawSectionBar(page, x, y, w, barH, '4. EMPLOYEE CERTIFICATION', fonts.bold, 7)
-  page.drawRectangle({
-    x,
-    y: y - bodyH,
-    width: w,
-    height: bodyH,
-    borderColor: LINE_BLUE,
-    borderWidth: 0.6,
-  })
-  page.drawText('I hereby certify that the above time record is true and correct.', {
-    x: x + 6,
-    y: y - 12,
-    size: 6.5,
-    font: fonts.regular,
-    color: BLACK,
-  })
-  // Lower signature/date lines so the section breathes
-  const sigY = y - bodyH + 14
-  drawCenteredOnLine(
-    page,
-    fonts,
-    data.employeeSignatureName,
-    'Signature over Printed Name',
-    x + 40,
-    sigY,
-    180,
-  )
-  drawCenteredOnLine(
-    page,
-    fonts,
-    data.employeeSignatureDate,
-    'Date (YYYY-MM-DD)',
-    x + w - 160,
-    sigY,
-    110,
-  )
-  return y - bodyH
-}
-
-function drawApprovals(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: number): number {
-  const x = MARGIN
-  const w = PAGE_W - MARGIN * 2
   const gap = 3
   const colW = (w - gap) / 2
-  const barH = 11
-  const bodyH = 64
+  const barH = CERT_BAR_H
+  const bodyH = CERT_BODY_H
   const y = topY - barH
 
   drawApprovalBox(
     page,
     fonts,
     x,
+    y,
+    colW,
+    barH,
+    bodyH,
+    '4. EMPLOYEE CERTIFICATION',
+    'I hereby certify that the above time record is true and correct.',
+    data.employeeSignatureName,
+    undefined,
+    data.employeeSignatureDate,
+    false,
+  )
+  drawApprovalBox(
+    page,
+    fonts,
+    x + colW + gap,
     y,
     colW,
     barH,
@@ -836,10 +786,22 @@ function drawApprovals(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: num
     data.supervisorPosition,
     data.supervisorDate,
   )
+  return y - bodyH
+}
+
+function drawApprovals(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: number): number {
+  const x = MARGIN
+  const w = PAGE_W - MARGIN * 2
+  const gap = 3
+  const colW = (w - gap) / 2
+  const barH = CERT_BAR_H
+  const bodyH = CERT_BODY_H
+  const y = topY - barH
+
   drawApprovalBox(
     page,
     fonts,
-    x + colW + gap,
+    x,
     y,
     colW,
     barH,
@@ -849,6 +811,21 @@ function drawApprovals(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: num
     data.departmentHeadSignatureName,
     data.departmentHeadPosition,
     data.departmentHeadDate,
+  )
+  drawApprovalBox(
+    page,
+    fonts,
+    x + colW + gap,
+    y,
+    colW,
+    barH,
+    bodyH,
+    '7. HRMO VERIFICATION',
+    'This is to certify that the above time record has been checked and verified.',
+    data.hrmoSignatureName,
+    undefined,
+    data.hrmoDate,
+    false,
   )
   return y - bodyH
 }
@@ -895,6 +872,7 @@ function drawApprovalBox(
   name?: string,
   position?: string,
   date?: string,
+  showPosition = true,
 ) {
   drawSectionBar(page, x, topY, width, barH, title, fonts.bold, 6)
   page.drawRectangle({
@@ -905,10 +883,15 @@ function drawApprovalBox(
     borderColor: LINE_BLUE,
     borderWidth: 0.6,
   })
+  const stmtMaxW = width - 10
+  let stmtSize = 5.5
+  while (stmtSize > 4.5 && fonts.regular.widthOfTextAtSize(statement, stmtSize) > stmtMaxW) {
+    stmtSize -= 0.25
+  }
   page.drawText(statement, {
     x: x + 5,
     y: topY - 11,
-    size: 5.5,
+    size: stmtSize,
     font: fonts.regular,
     color: BLACK,
   })
@@ -916,7 +899,7 @@ function drawApprovalBox(
   const pad = 10
   const sigLineX = x + 28
   const sigLineW = width - 56
-  const sigLineY = topY - 26
+  const sigLineY = topY - 40
   drawUnderline(page, sigLineX, sigLineY, sigLineW)
   if (name) {
     const size = 7
@@ -945,88 +928,8 @@ function drawApprovalBox(
   const fieldW = width - pad * 2
   const posY = topY - bodyH + 15
   const dateY = topY - bodyH + 5
-  drawLabeledLine(page, fonts, 'Position:', position, x + pad, posY, fieldW)
-  drawLabeledLine(page, fonts, 'Date (YYYY-MM-DD):', date, x + pad, dateY, fieldW)
-}
-
-function drawHrmoVerification(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: number): number {
-  const x = MARGIN
-  const w = PAGE_W - MARGIN * 2
-  const barH = 11
-  const bodyH = 44
-  const y = topY - barH
-  drawSectionBar(page, x, y, w, barH, '7. HRMO VERIFICATION', fonts.bold, 7)
-  page.drawRectangle({
-    x,
-    y: y - bodyH,
-    width: w,
-    height: bodyH,
-    borderColor: LINE_BLUE,
-    borderWidth: 0.6,
-  })
-  page.drawText('This is to certify that the above time record has been checked and verified.', {
-    x: x + 6,
-    y: y - 12,
-    size: 6.5,
-    font: fonts.regular,
-    color: BLACK,
-  })
-  // Lower signature/date lines so the section breathes
-  const sigY = y - bodyH + 14
-  drawCenteredOnLine(
-    page,
-    fonts,
-    data.hrmoSignatureName,
-    'Signature over Printed Name',
-    x + 40,
-    sigY,
-    180,
-  )
-  drawCenteredOnLine(page, fonts, data.hrmoDate, 'Date (YYYY-MM-DD)', x + w - 160, sigY, 110)
-  return y - bodyH
-}
-
-function drawReminders(page: PDFPage, fonts: Fonts, topY: number) {
-  const x = MARGIN
-  const w = PAGE_W - MARGIN * 2
-  const barH = 11
-  const y = topY - barH
-  const bottom = MARGIN - 2
-  const bodyH = Math.max(36, y - bottom)
-
-  page.drawCircle({ x: x + 8, y: y + 5, size: 5.5, color: NAVY })
-  page.drawText('!', {
-    x: x + 6.6,
-    y: y + 2.5,
-    size: 7,
-    font: fonts.bold,
-    color: WHITE,
-  })
-  drawSectionBar(page, x + 16, y, w - 16, barH, 'REMINDERS', fonts.bold, 7)
-  page.drawRectangle({
-    x,
-    y: y - bodyH,
-    width: w,
-    height: bodyH,
-    borderColor: LINE_BLUE,
-    borderWidth: 0.6,
-  })
-
-  const reminders = [
-    '1. Employees must record their time in/out accurately.',
-    '2. Three (3) Time In and Time Out entries are provided for AM, PM, and Overtime.',
-    '3. Undertime shall be deducted from the total hours worked.',
-    '4. DTR entries shall be validated and approved daily by the immediate supervisor.',
-    '5. Any erasures or alterations must be initialed by the employee and the approving authority.',
-    '6. Keep this record as part of the official file.',
-  ]
-  let ry = y - 9
-  const minY = y - bodyH + 4
-  for (const note of reminders) {
-    for (const line of wrapText(note, fonts.regular, 5.5, w - 12)) {
-      if (ry < minY) return
-      page.drawText(line, { x: x + 5, y: ry, size: 5.5, font: fonts.regular, color: BLACK })
-      ry -= 6.8
-    }
+  if (showPosition) {
+    drawLabeledLine(page, fonts, 'Position:', position, x + pad, posY, fieldW)
   }
+  drawLabeledLine(page, fonts, 'Date (YYYY-MM-DD):', date, x + pad, dateY, fieldW)
 }
