@@ -8,6 +8,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 import { encodeCode128B } from '../otaf/barcode'
+import { isLateAmClockIn, isLatePmClockIn } from './from-attendance'
 import type { DtrDayEntry, DtrFormData, EmploymentStatus } from './types'
 
 const PAGE_W = 595
@@ -36,6 +37,7 @@ const LIGHT_BAR = rgb(0.78, 0.88, 0.96)
 const BLACK = rgb(0.05, 0.05, 0.05)
 const WHITE = rgb(1, 1, 1)
 const GRAY = rgb(0.35, 0.35, 0.35)
+const LATE_YELLOW = rgb(1, 0.95, 0.4)
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
@@ -667,6 +669,8 @@ function drawTimeRecord(
     let cx = x
     for (let i = 0; i < widths.length; i++) {
       const cw = widths[i]!
+      const late =
+        (i === 2 && isLateAmClockIn(day.amIn)) || (i === 4 && isLatePmClockIn(day.pmIn))
       page.drawRectangle({
         x: cx,
         y: nextY,
@@ -674,6 +678,7 @@ function drawTimeRecord(
         height: rowH,
         borderColor: LINE_BLUE,
         borderWidth: 0.4,
+        ...(late ? { color: LATE_YELLOW } : {}),
       })
       const val = values[i]!
       if (val) {

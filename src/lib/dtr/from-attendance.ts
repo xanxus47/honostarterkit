@@ -6,9 +6,9 @@ const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 const TZ = 'Asia/Manila'
 
 /** Official 8-hour day: 08:00–12:00 and 13:00–17:00. Lunch 12:00–13:00 is unpaid. */
-const AM_START = 8 * 60
+export const AM_START = 8 * 60
 const AM_END = 12 * 60
-const PM_START = 13 * 60
+export const PM_START = 13 * 60
 const PM_END = 17 * 60
 const LUNCH_MINUTES = 60
 const SCHEDULED_MINUTES = AM_END - AM_START + (PM_END - PM_START)
@@ -27,6 +27,26 @@ function pad2(n: number) {
 function formatClock(minutes: number | undefined): string | undefined {
   if (minutes === undefined) return undefined
   return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`
+}
+
+export function parseClockToMinutes(value: string | undefined): number | undefined {
+  if (!value) return undefined
+  const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim())
+  if (!m) return undefined
+  const hour = Number(m[1])
+  const minute = Number(m[2])
+  if (hour > 23 || minute > 59) return undefined
+  return hour * 60 + minute
+}
+
+export function isLateAmClockIn(value: string | undefined): boolean {
+  const minutes = parseClockToMinutes(value)
+  return minutes !== undefined && minutes > AM_START
+}
+
+export function isLatePmClockIn(value: string | undefined): boolean {
+  const minutes = parseClockToMinutes(value)
+  return minutes !== undefined && minutes > PM_START
 }
 
 function formatHours(minutes: number): string {
