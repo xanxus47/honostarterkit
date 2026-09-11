@@ -8,7 +8,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 import { encodeCode128B } from '../otaf/barcode'
-import { isLateAmClockIn, isLatePmClockIn } from './from-attendance'
+import { isAutoLateRemark, isLateAmClockIn, isLatePmClockIn } from './from-attendance'
 import type { DtrDayEntry, DtrFormData, EmploymentStatus } from './types'
 
 const PAGE_W = 595
@@ -154,7 +154,7 @@ function normalizeDays(data: DtrFormData): DtrDayEntry[] {
       otOut: existing?.otOut,
       undertimeMinutes: existing?.undertimeMinutes,
       totalHoursWorked: existing?.totalHoursWorked,
-      remarks: existing?.remarks,
+      remarks: isAutoLateRemark(existing?.remarks) ? undefined : existing?.remarks,
     })
   }
   return rows

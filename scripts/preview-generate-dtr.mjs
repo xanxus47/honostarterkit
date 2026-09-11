@@ -32,7 +32,6 @@ const bytes = await generateDtrPdf(
         pmOut: '17:00',
         undertimeMinutes: '5',
         totalHoursWorked: '07:55',
-        remarks: 'Late',
       },
     ],
     totalHoursWorked: '176:00',

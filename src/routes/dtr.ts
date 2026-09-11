@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono'
 import logoBytes from '../../assets/LGU-otaf.png'
 import { getSql, type AppBindings } from '../lib/db'
-import { parsePunchPayload, withAttendance } from '../lib/dtr/from-attendance'
+import { isAutoLateRemark, parsePunchPayload, withAttendance } from '../lib/dtr/from-attendance'
 import { generateDtrPdf } from '../lib/dtr/generate-dtr'
 import { addPunches, listPunches } from '../lib/dtr/punch-store'
 import { createDtr, deleteDtr, getDtr, listDtr, updateDtr } from '../lib/dtr/store'
@@ -71,7 +71,8 @@ function parseDays(raw: unknown): DtrDayEntry[] | undefined {
       otOut: typeof row.otOut === 'string' ? row.otOut : undefined,
       undertimeMinutes: typeof row.undertimeMinutes === 'string' ? row.undertimeMinutes : undefined,
       totalHoursWorked: typeof row.totalHoursWorked === 'string' ? row.totalHoursWorked : undefined,
-      remarks: typeof row.remarks === 'string' ? row.remarks : undefined,
+      remarks:
+        typeof row.remarks === 'string' && !isAutoLateRemark(row.remarks) ? row.remarks : undefined,
     }
   })
 }

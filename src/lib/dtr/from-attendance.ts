@@ -49,6 +49,11 @@ export function isLatePmClockIn(value: string | undefined): boolean {
   return minutes !== undefined && minutes > PM_START
 }
 
+/** Auto-generated tardiness notes such as "Late 11 min" — remarks are encoded by hand. */
+export function isAutoLateRemark(value: string | undefined): boolean {
+  return Boolean(value && /^late\s*\d+\s*mins?\.?$/i.test(value.trim()))
+}
+
 function formatHours(minutes: number): string {
   return `${Math.floor(minutes / 60)}:${pad2(minutes % 60)}`
 }
