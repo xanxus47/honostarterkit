@@ -37,7 +37,7 @@ const LIGHT_BAR = rgb(0.78, 0.88, 0.96)
 const BLACK = rgb(0.05, 0.05, 0.05)
 const WHITE = rgb(1, 1, 1)
 const GRAY = rgb(0.35, 0.35, 0.35)
-const LATE_YELLOW = rgb(1, 0.95, 0.4)
+const LATE_RED = rgb(0.82, 0.08, 0.08)
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
@@ -678,11 +678,10 @@ function drawTimeRecord(
         height: rowH,
         borderColor: LINE_BLUE,
         borderWidth: 0.4,
-        ...(late ? { color: LATE_YELLOW } : {}),
       })
       const val = values[i]!
       if (val) {
-        drawCentered(page, val, textY, fonts.regular, cellSize, BLACK, cx, cx + cw)
+        drawCentered(page, val, textY, fonts.regular, cellSize, late ? LATE_RED : BLACK, cx, cx + cw)
       } else if (i >= 2 && i <= 7) {
         drawCentered(page, '__:__', textY, fonts.regular, cellSize, GRAY, cx, cx + cw)
       }
