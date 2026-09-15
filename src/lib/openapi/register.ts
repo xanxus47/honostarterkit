@@ -12,6 +12,8 @@ import {
   IdParam,
   LocatorBody,
   LocatorRecord,
+  OafBody,
+  OafRecord,
   OarBody,
   OarRecord,
   OcfBody,
@@ -253,6 +255,20 @@ export function registerOpenApi(app: OpenAPIHono) {
     title: 'Overtime Authorization Form',
     body: OtafBody,
     record: OtafRecord,
+  })
+
+  registerDownloadAndForm(app, {
+    tag: 'OAF',
+    prefix: '/oaf',
+    title: 'Overtime Amendment Form',
+    body: OafBody,
+  })
+  registerCrud(app, {
+    tag: 'OAF',
+    prefix: '/oaf',
+    title: 'Overtime Amendment Form',
+    body: OafBody,
+    record: OafRecord,
   })
 
   registerDownloadAndForm(app, {

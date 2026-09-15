@@ -7,6 +7,7 @@ import acr from './routes/acr'
 import cto from './routes/cto'
 import dtr from './routes/dtr'
 import locator from './routes/locator'
+import oaf from './routes/oaf'
 import oar from './routes/oar'
 import ocf from './routes/ocf'
 import otc from './routes/otc'
@@ -21,6 +22,7 @@ app.get('/', (c) => {
 })
 
 app.route('/otaf', otaf)
+app.route('/oaf', oaf)
 app.route('/ocf', ocf)
 app.route('/oar', oar)
 app.route('/otc', otc)
@@ -42,6 +44,7 @@ app.doc('/doc', {
   tags: [
     { name: 'Meta', description: 'Service health' },
     { name: 'OTAF', description: 'Overtime Authorization Form' },
+    { name: 'OAF', description: 'Overtime Amendment Form' },
     { name: 'OCF', description: 'Overtime Cancellation Form' },
     { name: 'OAR', description: 'Overtime Accomplishment Report' },
     { name: 'OTC', description: 'Overtime Certification' },

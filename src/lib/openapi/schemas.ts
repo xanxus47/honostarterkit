@@ -100,6 +100,47 @@ export const OcfBody = withMeta(
   'OcfForm',
 )
 
+export const OafBody = withMeta(
+  z
+    .object({
+      controlNumber: s,
+      dateFiled: s,
+      originalOtaControlNumber: s,
+      dateApproved: s,
+      employeeId: s,
+      employeeName: s,
+      position: s,
+      officeDepartment: s,
+      employmentStatus: s,
+      originalDateOfOvertime: s,
+      originalDaysOfWeek: s,
+      originalTimeIn: s,
+      originalTimeOut: s,
+      originalTotalHours: s,
+      newDateOfOvertime: s,
+      newDaysOfWeek: s,
+      newTimeIn: s,
+      newTimeOut: s,
+      newTotalHours: s,
+      reasonForAmendment: s,
+      requestedBy: s,
+      requestedByDate: s,
+      recommendedBy: s,
+      recommendedByDate: s,
+      approvedBy: s,
+      approvedByDate: s,
+      verifiedBy: s,
+      verifiedByDate: s,
+      hrmoReceivedBy: s,
+      hrmoReceivedDate: s,
+      hrmoEncodedBy: s,
+      hrmoEncodedDate: s,
+      hrmoRemarks: s,
+    })
+    .passthrough(),
+  'OafForm',
+)
+
 export const OarBody = withMeta(
   z
     .object({
@@ -518,6 +559,7 @@ export function itemSchema<T extends z.ZodType>(item: T, name: string) {
 }
 
 export const OtafRecord = recordSchema(OtafBody, 'OtafRecord')
+export const OafRecord = recordSchema(OafBody, 'OafRecord')
 export const OcfRecord = recordSchema(OcfBody, 'OcfRecord')
 export const OarRecord = recordSchema(OarBody, 'OarRecord')
 export const OtcRecord = recordSchema(OtcBody, 'OtcRecord')
