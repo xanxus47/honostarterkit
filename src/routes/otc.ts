@@ -16,6 +16,7 @@ const FIELD_KEYS: (keyof OtcFormData)[] = [
   'employmentStatus',
   'payrollGroup',
   'datesOfOvertime',
+  'overtimeDate',
   'daysOfWeek',
   'approvedOvertimeHours',
   'actualHoursRendered',

@@ -12,6 +12,7 @@ export type OtcFormData = {
   payrollGroup?: string
 
   datesOfOvertime?: string
+  overtimeDate?: string      // YYYY-MM-DD, used for DTR auto-populate
   daysOfWeek?: string
   approvedOvertimeHours?: string
   actualHoursRendered?: string
