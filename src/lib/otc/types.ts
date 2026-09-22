@@ -3,6 +3,7 @@ export type OvertimeDisposition = 'overtimePay' | 'cto'
 export type OtcFormData = {
   controlNumber?: string
   dateCertified?: string
+  otaControlNumber?: string
 
   employeeName?: string
   employeeId?: string

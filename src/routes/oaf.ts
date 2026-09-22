@@ -9,6 +9,7 @@ const oaf = new Hono()
 const FIELD_KEYS: (keyof OafFormData)[] = [
   'controlNumber',
   'dateFiled',
+  'otaControlNumber',
   'originalOtaControlNumber',
   'dateApproved',
   'employeeId',

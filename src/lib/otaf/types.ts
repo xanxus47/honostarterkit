@@ -37,12 +37,6 @@ export type OtafFormData = {
 
   employeeSignatureName?: string
   employeeSignatureDate?: string
-
-  payrollReferenceNo?: string
-  payrollDatePosted?: string
-  payrollEncodedBy?: string
-  payrollCheckedBy?: string
-  payrollApprovedBy?: string
 }
 
 export type OtafRecord = OtafFormData & {

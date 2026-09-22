@@ -8,6 +8,7 @@ export type SupervisorRating =
 export type OarFormData = {
   controlNumber?: string
   dateFiled?: string
+  otaControlNumber?: string
 
   employeeId?: string
   employeeName?: string

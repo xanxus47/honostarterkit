@@ -9,6 +9,7 @@ const otc = new Hono()
 const FIELD_KEYS: (keyof OtcFormData)[] = [
   'controlNumber',
   'dateCertified',
+  'otaControlNumber',
   'employeeName',
   'employeeId',
   'position',

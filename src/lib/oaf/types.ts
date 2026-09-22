@@ -1,6 +1,7 @@
 export type OafFormData = {
   controlNumber?: string
   dateFiled?: string
+  otaControlNumber?: string
 
   originalOtaControlNumber?: string
   dateApproved?: string

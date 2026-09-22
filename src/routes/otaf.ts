@@ -35,11 +35,6 @@ const FIELD_KEYS: (keyof OtafFormData)[] = [
   'hrmoDate',
   'employeeSignatureName',
   'employeeSignatureDate',
-  'payrollReferenceNo',
-  'payrollDatePosted',
-  'payrollEncodedBy',
-  'payrollCheckedBy',
-  'payrollApprovedBy',
 ]
 
 function pick(form: FormData | URLSearchParams, key: string): string | undefined {

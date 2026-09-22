@@ -9,6 +9,7 @@ const oar = new Hono()
 const FIELD_KEYS: (keyof OarFormData)[] = [
   'controlNumber',
   'dateFiled',
+  'otaControlNumber',
   'employeeId',
   'employeeName',
   'position',

@@ -9,7 +9,7 @@ import {
 } from 'pdf-lib'
 import { encode as encodeQr } from 'uqr'
 import { encodeCode128B } from './barcode'
-import { drawCalendarIcon, drawClipboardIcon, drawClockIcon } from './icons'
+import { drawCalendarIcon, drawClockIcon } from './icons'
 import type { EmploymentStatus, OtafFormData } from './types'
 
 const PAGE_W = 595
@@ -19,7 +19,6 @@ const MARGIN = 22
 const NAVY = rgb(0.05, 0.18, 0.38)
 const TITLE_BLUE = rgb(0.1, 0.28, 0.55)
 const LINE_BLUE = rgb(0.15, 0.35, 0.65)
-const LIGHT_BORDER = rgb(0.55, 0.7, 0.85)
 const RED = rgb(0.78, 0.08, 0.08)
 const BLACK = rgb(0.05, 0.05, 0.05)
 const WHITE = rgb(1, 1, 1)
@@ -212,8 +211,7 @@ export async function generateOtafPdf(
   let y = PAGE_H - 124
   y = drawEmployeeSection(page, fonts, data, y)
   y = drawApprovalSection(page, fonts, data, y - 4)
-  y = drawSignatureSection(page, fonts, data, y - 4, verificationUrl, verificationCode)
-  drawFooterSection(page, fonts, data, y - 4)
+  drawSignatureSection(page, fonts, data, y - 4, verificationUrl, verificationCode)
 
   // Slogan
   drawCentered(
@@ -759,86 +757,4 @@ function drawSignatureSection(
   drawFieldValue(page, verificationCode, qx + 80, bottom + 10, fonts.regular, 7, colW - 94)
 
   return bottom
-}
-
-function drawFooterSection(page: PDFPage, fonts: Fonts, data: OtafFormData, topY: number) {
-  const x = MARGIN
-  const contentW = PAGE_W - MARGIN * 2
-  const gap = 6
-  const leftW = contentW * 0.58
-  const rightW = contentW - leftW - gap
-  const boxH = topY - 42
-  const boxY = 42
-
-  // Reminders
-  page.drawRectangle({
-    x,
-    y: boxY,
-    width: leftW,
-    height: boxH,
-    borderColor: LIGHT_BORDER,
-    borderWidth: 1,
-  })
-  drawClipboardIcon(page, x + 6, boxY + boxH - 14, 10)
-  page.drawText('REMINDERS / NOTES', {
-    x: x + 20,
-    y: boxY + boxH - 12,
-    size: 8,
-    font: fonts.bold,
-    color: NAVY,
-  })
-
-  const reminders = [
-    '1. Overtime must be authorized before actual rendition of service.',
-    '2. This form does not apply to employees under flexible working hours without prior approval.',
-    '3. Overtime overlapping with leave or undertime is not compensable.',
-    '4. Supporting DTR / biometric logs may be required for payroll processing.',
-    '5. Unauthorized overtime shall not be credited for compensation.',
-  ]
-  let ry = boxY + boxH - 26
-  for (const note of reminders) {
-    const lines = wrapText(note, fonts.regular, 6.2, leftW - 14)
-    for (const line of lines) {
-      page.drawText(line, { x: x + 7, y: ry, size: 6.2, font: fonts.regular, color: BLACK })
-      ry -= 8.5
-    }
-    ry -= 1.5
-  }
-
-  // Payroll box
-  const rx = x + leftW + gap
-  page.drawRectangle({
-    x: rx,
-    y: boxY,
-    width: rightW,
-    height: boxH,
-    borderColor: LIGHT_BORDER,
-    borderWidth: 1,
-  })
-  drawCentered(
-    page,
-    'FOR PAYROLL USE ONLY',
-    boxY + boxH - 12,
-    fonts.bold,
-    8,
-    NAVY,
-    rx,
-    rx + rightW,
-  )
-
-  const payrollFields: [string, string | undefined][] = [
-    ['Payroll Reference No.:', data.payrollReferenceNo],
-    ['Date Posted:', data.payrollDatePosted],
-    ['Encoded By:', data.payrollEncodedBy],
-    ['Checked By:', data.payrollCheckedBy],
-    ['Approved By:', data.payrollApprovedBy],
-  ]
-  let py = boxY + boxH - 30
-  for (const [label, value] of payrollFields) {
-    page.drawText(label, { x: rx + 6, y: py, size: 6.5, font: fonts.regular, color: BLACK })
-    const lineX = rx + 90
-    drawUnderline(page, lineX, py - 1, rightW - 98)
-    drawFieldValue(page, value, lineX + 2, py + 1, fonts.regular, 7, rightW - 102)
-    py -= 14
-  }
 }

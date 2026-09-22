@@ -58,32 +58,3 @@ export function drawClockIcon(page: PDFPage, x: number, y: number, size = 9, col
     color,
   })
 }
-
-/** Clipboard icon for reminders header. */
-export function drawClipboardIcon(page: PDFPage, x: number, y: number, size = 10, color: RGB = blue) {
-  page.drawRectangle({
-    x,
-    y,
-    width: size * 0.85,
-    height: size,
-    borderColor: color,
-    borderWidth: 0.8,
-  })
-  page.drawRectangle({
-    x: x + size * 0.18,
-    y: y + size * 0.78,
-    width: size * 0.5,
-    height: size * 0.28,
-    borderColor: color,
-    borderWidth: 0.7,
-    color: rgb(1, 1, 1),
-  })
-  for (let i = 0; i < 3; i++) {
-    page.drawLine({
-      start: { x: x + 1.5, y: y + 2 + i * 2.2 },
-      end: { x: x + size * 0.7, y: y + 2 + i * 2.2 },
-      thickness: 0.6,
-      color,
-    })
-  }
-}
