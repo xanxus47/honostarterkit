@@ -90,6 +90,43 @@ function drawFieldValue(
   page.drawText(text, { x, y, size, font, color: BLACK })
 }
 
+function fitText(text: string, font: PDFFont, size: number, maxWidth: number): string {
+  if (font.widthOfTextAtSize(text, size) <= maxWidth) return text
+  let fitted = text
+  while (fitted.length > 1 && font.widthOfTextAtSize(`${fitted}…`, size) > maxWidth) {
+    fitted = fitted.slice(0, -1)
+  }
+  return `${fitted}…`
+}
+
+function drawCenteredField(
+  page: PDFPage,
+  value: string | undefined,
+  x0: number,
+  x1: number,
+  y: number,
+  font: PDFFont,
+  size: number,
+) {
+  if (!value) return
+  const text = fitText(value, font, size, x1 - x0)
+  const w = font.widthOfTextAtSize(text, size)
+  page.drawText(text, { x: (x0 + x1 - w) / 2, y, size, font, color: BLACK })
+}
+
+function drawCenteredCaption(
+  page: PDFPage,
+  text: string,
+  x0: number,
+  x1: number,
+  y: number,
+  font: PDFFont,
+  size: number,
+) {
+  const w = font.widthOfTextAtSize(text, size)
+  page.drawText(text, { x: (x0 + x1 - w) / 2, y, size, font, color: GRAY })
+}
+
 function drawCheckbox(
   page: PDFPage,
   x: number,
@@ -208,10 +245,42 @@ export async function generateOtafPdf(
   })
 
   drawHeader(page, fonts, logo, controlNumber, data.dateRequested)
-  let y = PAGE_H - 124
-  y = drawEmployeeSection(page, fonts, data, y)
-  y = drawApprovalSection(page, fonts, data, y - 4)
-  drawSignatureSection(page, fonts, data, y - 4, verificationUrl, verificationCode)
+
+  // Natural stack ends high on the page. Spread the leftover height through
+  // the employee rows and the two boxed sections so the form meets the slogan.
+  const contentTop = PAGE_H - 124
+  const sectionGap = 5
+  const boxFloor = 46
+  const employeeBase = 204
+  const approvalBar = 22
+  const approvalBodyBase = 112
+  const signatureBar = 14
+  const signatureBodyBase = 100
+  const naturalEnd =
+    contentTop -
+    employeeBase -
+    sectionGap -
+    approvalBar -
+    approvalBodyBase -
+    sectionGap -
+    signatureBar -
+    signatureBodyBase
+  const slack = Math.max(0, naturalEnd - boxFloor)
+  const employeeExtra = Math.round(slack * 0.18)
+  const approvalExtra = Math.round(slack * 0.46)
+  const signatureExtra = slack - employeeExtra - approvalExtra
+
+  let y = drawEmployeeSection(page, fonts, data, contentTop, employeeExtra / 6)
+  y = drawApprovalSection(page, fonts, data, y - sectionGap, approvalBodyBase + approvalExtra)
+  drawSignatureSection(
+    page,
+    fonts,
+    data,
+    y - sectionGap,
+    verificationUrl,
+    verificationCode,
+    signatureBodyBase + signatureExtra,
+  )
 
   // Slogan
   drawCentered(
@@ -344,7 +413,13 @@ function drawHeader(
   )
 }
 
-function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, topY: number): number {
+function drawEmployeeSection(
+  page: PDFPage,
+  fonts: Fonts,
+  data: OtafFormData,
+  topY: number,
+  rowPad = 0,
+): number {
   const x = MARGIN
   const contentW = PAGE_W - MARGIN * 2
   const barH = 14
@@ -354,7 +429,8 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   const colGap = 8
   const colW = (contentW - colGap) / 2
   const innerPad = 4
-  y -= 14
+  const groupGap = 14 + rowPad
+  y -= groupGap
 
   // Row 1: name / id
   page.drawText('1. Employee Name', { x: x + innerPad, y, size: 7.5, font: fonts.bold, color: BLACK })
@@ -380,7 +456,7 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   )
 
   // Row 2: position / office
-  y -= 14
+  y -= groupGap
   page.drawText('3. Position', { x: x + innerPad, y, size: 7.5, font: fonts.bold, color: BLACK })
   page.drawText('4. Office / Department', {
     x: x + colW + colGap + innerPad,
@@ -404,7 +480,7 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   )
 
   // Row 3: employment status / date of OT
-  y -= 14
+  y -= groupGap
   page.drawText('5. Employment Status', {
     x: x + innerPad,
     y,
@@ -438,7 +514,7 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   drawFieldValue(page, data.dateOfOvertime, dateX + 2, y + 2, fonts.regular, 8.5, colW - 30)
 
   // Row 4: time in / out / hours
-  y -= 14
+  y -= groupGap
   const tCol = contentW / 3
   page.drawText('7. Time In', { x: x + innerPad, y, size: 7.5, font: fonts.bold, color: BLACK })
   page.drawText('8. Time Out', {
@@ -483,7 +559,7 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   )
 
   // Purpose
-  y -= 14
+  y -= groupGap
   page.drawText('10. Purpose / Justification', {
     x: x + innerPad,
     y,
@@ -508,7 +584,7 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   }
 
   // Activity / Funding
-  y -= 14
+  y -= groupGap
   page.drawText('11. Activity / Project', {
     x: x + innerPad,
     y,
@@ -552,12 +628,17 @@ function drawEmployeeSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
   return y
 }
 
-function drawApprovalSection(page: PDFPage, fonts: Fonts, data: OtafFormData, topY: number): number {
+function drawApprovalSection(
+  page: PDFPage,
+  fonts: Fonts,
+  data: OtafFormData,
+  topY: number,
+  bodyH = 112,
+): number {
   const x = MARGIN
   const contentW = PAGE_W - MARGIN * 2
   const colW = contentW / 3
   const barH = 22
-  const bodyH = 112
   const bottom = topY - barH - bodyH
 
   const cols = [
@@ -630,32 +711,31 @@ function drawApprovalSection(page: PDFPage, fonts: Fonts, data: OtafFormData, to
       cy -= 9
     }
 
-    cy = bottom + 50
-    drawUnderline(page, cx + 10, cy, colW - 20)
-    drawFieldValue(page, col.name, cx + 12, cy + 2, fonts.regular, 7.5, colW - 24)
-    page.drawText('Signature over Printed Name', {
-      x: cx + 10,
-      y: cy - 9,
-      size: 6,
-      font: fonts.regular,
-      color: GRAY,
-    })
+    const dateY = bottom + 10
+    const usable = cy - 8 - dateY
+    const nameY = usable > 36 ? dateY + usable * 0.62 : bottom + 50
+    const positionY = usable > 36 ? dateY + usable * 0.32 : bottom + 26
 
-    cy = bottom + 26
-    drawUnderline(page, cx + 10, cy, colW - 20)
-    drawFieldValue(page, col.position, cx + 12, cy + 2, fonts.regular, 7.5, colW - 24)
-    page.drawText('Position/Designation', {
-      x: cx + 10,
-      y: cy - 9,
-      size: 6,
-      font: fonts.regular,
-      color: GRAY,
-    })
+    const lineX0 = cx + 10
+    const lineX1 = cx + colW - 10
+    drawUnderline(page, lineX0, nameY, lineX1 - lineX0)
+    drawCenteredField(page, col.name, lineX0, lineX1, nameY + 2, fonts.regular, 7.5)
+    drawCenteredCaption(page, 'Signature over Printed Name', lineX0, lineX1, nameY - 9, fonts.regular, 6)
 
-    cy = bottom + 8
-    page.drawText('Date:', { x: cx + 10, y: cy, size: 6.5, font: fonts.regular, color: BLACK })
-    drawUnderline(page, cx + 30, cy - 1, colW - 40)
-    drawFieldValue(page, col.date, cx + 32, cy + 1, fonts.regular, 7, colW - 44)
+    drawUnderline(page, lineX0, positionY, lineX1 - lineX0)
+    drawCenteredField(page, col.position, lineX0, lineX1, positionY + 2, fonts.regular, 7.5)
+    drawCenteredCaption(page, 'Position/Designation', lineX0, lineX1, positionY - 9, fonts.regular, 6)
+
+    drawUnderline(page, lineX0, dateY - 1, lineX1 - lineX0)
+    drawCenteredField(
+      page,
+      col.date ? `Date: ${col.date}` : 'Date:',
+      lineX0,
+      lineX1,
+      dateY,
+      fonts.regular,
+      6.5,
+    )
   })
 
   return bottom
@@ -668,12 +748,12 @@ function drawSignatureSection(
   topY: number,
   verificationUrl: string,
   verificationCode: string,
+  bodyH = 100,
 ): number {
   const x = MARGIN
   const contentW = PAGE_W - MARGIN * 2
   const colW = contentW / 2
   const barH = 14
-  const bodyH = 100
   const bottom = topY - barH - bodyH
 
   page.drawRectangle({
@@ -708,20 +788,32 @@ function drawSignatureSection(
     page.drawText(line, { x: x + 6, y: ey, size: 6.5, font: fonts.regular, color: BLACK })
     ey -= 9
   }
-  ey = bottom + 38
-  drawUnderline(page, x + 16, ey, colW - 32)
-  drawFieldValue(page, data.employeeSignatureName, x + 18, ey + 2, fonts.regular, 8, colW - 36)
-  page.drawText('Signature over Printed Name', {
-    x: x + 16,
-    y: ey - 9,
-    size: 6,
-    font: fonts.regular,
-    color: GRAY,
-  })
-  ey = bottom + 12
-  page.drawText('Date:', { x: x + 16, y: ey, size: 6.5, font: fonts.regular, color: BLACK })
-  drawUnderline(page, x + 36, ey - 1, colW - 52)
-  drawFieldValue(page, data.employeeSignatureDate, x + 38, ey + 1, fonts.regular, 7.5, colW - 56)
+  const dateY = bottom + 12
+  const usable = ey - 8 - dateY
+  const nameY = usable > 28 ? dateY + usable * 0.58 : bottom + 38
+  const empLineX0 = x + 16
+  const empLineX1 = x + colW - 16
+  drawUnderline(page, empLineX0, nameY, empLineX1 - empLineX0)
+  drawCenteredField(page, data.employeeSignatureName, empLineX0, empLineX1, nameY + 2, fonts.regular, 8)
+  drawCenteredCaption(
+    page,
+    'Signature over Printed Name',
+    empLineX0,
+    empLineX1,
+    nameY - 9,
+    fonts.regular,
+    6,
+  )
+  drawUnderline(page, empLineX0, dateY - 1, empLineX1 - empLineX0)
+  drawCenteredField(
+    page,
+    data.employeeSignatureDate ? `Date: ${data.employeeSignatureDate}` : 'Date:',
+    empLineX0,
+    empLineX1,
+    dateY,
+    fonts.regular,
+    6.5,
+  )
 
   // QR verification
   const qx = x + colW
@@ -733,28 +825,32 @@ function drawSignatureSection(
     font: fonts.bold,
     color: WHITE,
   })
+  const hintY = topY - barH - 12
   page.drawText('Scan QR code to verify this Overtime Authorization.', {
     x: qx + 8,
-    y: topY - barH - 12,
+    y: hintY,
     size: 6.5,
     font: fonts.regular,
     color: BLACK,
   })
 
-  const qrSize = 58
+  const codeY = bottom + 10
+  const qrSize = Math.min(78, Math.max(58, bodyH - 70))
+  const qrAreaTop = hintY - 8
+  const qrAreaBottom = codeY + 16
   const qrX = qx + (colW - qrSize) / 2
-  const qrY = bottom + 26
+  const qrY = qrAreaBottom + Math.max(0, qrAreaTop - qrAreaBottom - qrSize) / 2
   drawQr(page, verificationUrl, qrX, qrY, qrSize)
 
   page.drawText('Verification Code:', {
     x: qx + 10,
-    y: bottom + 10,
+    y: codeY,
     size: 6.5,
     font: fonts.regular,
     color: BLACK,
   })
-  drawUnderline(page, qx + 78, bottom + 8, colW - 90)
-  drawFieldValue(page, verificationCode, qx + 80, bottom + 10, fonts.regular, 7, colW - 94)
+  drawUnderline(page, qx + 78, codeY - 2, colW - 90)
+  drawFieldValue(page, verificationCode, qx + 80, codeY, fonts.regular, 7, colW - 94)
 
   return bottom
 }
