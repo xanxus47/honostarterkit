@@ -223,11 +223,34 @@ export function buildDaysFromPunches(
   return rows
 }
 
+function remarksByDay(days: DtrDayEntry[] | undefined): Map<number, string> {
+  const map = new Map<number, string>()
+  for (const row of days || []) {
+    const day = typeof row.day === 'number' ? row.day : Number(row.day)
+    const remark = row.remarks?.trim()
+    if (!Number.isFinite(day) || !remark || isAutoLateRemark(remark)) continue
+    map.set(day, remark)
+  }
+  return map
+}
+
+function withPreservedRemarks(days: DtrDayEntry[], incoming?: DtrDayEntry[]): DtrDayEntry[] {
+  const remarks = remarksByDay(incoming)
+  if (!remarks.size) return days
+  return days.map((row) => {
+    const remark = row.day !== undefined ? remarks.get(row.day) : undefined
+    return remark ? { ...row, remarks: remark } : row
+  })
+}
+
 export function applyAttendanceToDtr(data: DtrFormData, punches: AttendancePunch[]): DtrFormData {
   if (!data.employeeId) return data
   const coverage = inferPeriod(data, punches)
   if (!coverage) return data
-  const days = buildDaysFromPunches(punches, coverage.periodFrom, coverage.periodTo)
+  const days = withPreservedRemarks(
+    buildDaysFromPunches(punches, coverage.periodFrom, coverage.periodTo),
+    data.days,
+  )
   if (!days.length) return { ...data, periodFrom: data.periodFrom || coverage.periodFrom, periodTo: data.periodTo || coverage.periodTo }
 
   let workedTotal = 0

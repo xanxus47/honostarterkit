@@ -61,6 +61,28 @@ function drawCentered(
   page.drawText(text, { x: (x0 + x1 - w) / 2, y, size, font, color })
 }
 
+function drawFitted(
+  page: PDFPage,
+  text: string,
+  y: number,
+  font: PDFFont,
+  size: number,
+  color: RGB,
+  x: number,
+  width: number,
+) {
+  let fitted = size
+  while (fitted > 4 && font.widthOfTextAtSize(text, fitted) > width) fitted -= 0.25
+  let value = text
+  if (font.widthOfTextAtSize(value, fitted) > width) {
+    while (value.length > 1 && font.widthOfTextAtSize(`${value}...`, fitted) > width) {
+      value = value.slice(0, -1)
+    }
+    value = `${value}...`
+  }
+  page.drawText(value, { x, y, size: fitted, font, color })
+}
+
 function drawUnderline(page: PDFPage, x: number, y: number, width: number, color: RGB = LINE_BLUE) {
   page.drawLine({ start: { x, y }, end: { x: x + width, y }, thickness: 0.6, color })
 }
@@ -681,7 +703,12 @@ function drawTimeRecord(
       })
       const val = values[i]!
       if (val) {
-        drawCentered(page, val, textY, fonts.regular, cellSize, late ? LATE_RED : BLACK, cx, cx + cw)
+        const isRemarks = i === values.length - 1
+        if (isRemarks) {
+          drawFitted(page, val, textY, fonts.regular, cellSize, BLACK, cx + 1.5, cw - 3)
+        } else {
+          drawCentered(page, val, textY, fonts.regular, cellSize, late ? LATE_RED : BLACK, cx, cx + cw)
+        }
       } else if (i >= 2 && i <= 7) {
         drawCentered(page, '__:__', textY, fonts.regular, cellSize, GRAY, cx, cx + cw)
       }
