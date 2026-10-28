@@ -8,6 +8,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 import { encode as encodeQr } from 'uqr'
+import { toPrintedName } from '../printed-name'
 import { encodeCode128B } from './barcode'
 import { drawCalendarIcon, drawClockIcon } from './icons'
 import type { EmploymentStatus, OtafFormData } from './types'
@@ -719,7 +720,7 @@ function drawApprovalSection(
     const lineX0 = cx + 10
     const lineX1 = cx + colW - 10
     drawUnderline(page, lineX0, nameY, lineX1 - lineX0)
-    drawCenteredField(page, col.name, lineX0, lineX1, nameY + 2, fonts.regular, 7.5)
+    drawCenteredField(page, toPrintedName(col.name), lineX0, lineX1, nameY + 2, fonts.bold, 7.5)
     drawCenteredCaption(page, 'Signature over Printed Name', lineX0, lineX1, nameY - 9, fonts.regular, 6)
 
     drawUnderline(page, lineX0, positionY, lineX1 - lineX0)
@@ -794,7 +795,7 @@ function drawSignatureSection(
   const empLineX0 = x + 16
   const empLineX1 = x + colW - 16
   drawUnderline(page, empLineX0, nameY, empLineX1 - empLineX0)
-  drawCenteredField(page, data.employeeSignatureName, empLineX0, empLineX1, nameY + 2, fonts.regular, 8)
+  drawCenteredField(page, toPrintedName(data.employeeSignatureName), empLineX0, empLineX1, nameY + 2, fonts.bold, 8)
   drawCenteredCaption(
     page,
     'Signature over Printed Name',

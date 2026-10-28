@@ -321,7 +321,7 @@ function formPage(): string {
         <legend>Employee Signature & Verification</legend>
         <div class="grid">
           <label>16. Employee Signature Name
-            <input name="employeeSignatureName" />
+            <input name="employeeSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" />
           </label>
           <label>Employee Signature Date
             <input name="employeeSignatureDate" />

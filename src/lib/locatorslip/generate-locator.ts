@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import type { LocatorFormData } from './types'
 
 const PAGE_W = 595
@@ -163,14 +164,17 @@ function drawSigCaption(
   lineW: number,
 ) {
   drawUnderline(page, x, lineY, lineW)
-  if (name) {
+  const isPrintedName = /name|signature/i.test(caption) && !/date/i.test(caption)
+  const printed = isPrintedName ? toPrintedName(name) : name
+  if (printed) {
     const size = 6
-    const nw = fonts.regular.widthOfTextAtSize(name, size)
-    page.drawText(name, {
+    const font = isPrintedName ? fonts.bold : fonts.regular
+    const nw = font.widthOfTextAtSize(printed, size)
+    page.drawText(printed, {
       x: x + Math.max(2, (lineW - nw) / 2),
       y: lineY + 1.5,
       size,
-      font: fonts.regular,
+      font,
       color: BLACK,
     })
   }

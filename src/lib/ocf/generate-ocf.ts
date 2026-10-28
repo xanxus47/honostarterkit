@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import { encodeCode128B } from '../otaf/barcode'
 import { drawClipboardIcon } from '../otaf/icons'
 import type { OcfFormData } from './types'
@@ -532,7 +533,7 @@ function drawPartySection(
 
   const colW = w / 2
   let rowY = y - 16
-  labeledLine(page, fonts, `${fields.nameLabel} :`, fields.name, x + 8, rowY, colW - 100)
+  labeledLine(page, fonts, `${fields.nameLabel} :`, toPrintedName(fields.name), x + 8, rowY, colW - 100)
   labeledLine(
     page,
     fonts,
@@ -550,6 +551,18 @@ function drawPartySection(
   const sigW = 160
   const sigX = x + (w - sigW) / 2
   drawUnderline(page, sigX, sigY, sigW)
+  const printedName = toPrintedName(fields.name)
+  if (printedName) {
+    const size = 7
+    const nw = fonts.bold.widthOfTextAtSize(printedName, size)
+    page.drawText(printedName, {
+      x: sigX + (sigW - nw) / 2,
+      y: sigY + 2,
+      size,
+      font: fonts.bold,
+      color: BLACK,
+    })
+  }
   drawCentered(
     page,
     'Signature over Printed Name',

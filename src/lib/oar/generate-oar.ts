@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import { encodeCode128B } from '../otaf/barcode'
 import { drawClipboardIcon } from '../otaf/icons'
 import type { OarFormData, SupervisorRating } from './types'
@@ -644,8 +645,9 @@ function drawCertifications(page: PDFPage, fonts: Fonts, data: OarFormData, topY
   }
   ey = bottom + 36
   drawUnderline(page, x + 18, ey, colW - 36)
-  if (data.employeeSignatureName) {
-    drawCentered(page, data.employeeSignatureName, ey + 2, fonts.regular, 8, BLACK, x + 18, x + colW - 18)
+  const empPrinted = toPrintedName(data.employeeSignatureName)
+  if (empPrinted) {
+    drawCentered(page, empPrinted, ey + 2, fonts.bold, 8, BLACK, x + 18, x + colW - 18)
   }
   drawCentered(page, 'Employee Signature', ey - 10, fonts.regular, 6.5, GRAY, x, x + colW)
   ey = bottom + 12
@@ -672,8 +674,9 @@ function drawCertifications(page: PDFPage, fonts: Fonts, data: OarFormData, topY
   }
   sy = bottom + 42
   drawUnderline(page, sx + 14, sy, colW - 28)
-  if (data.supervisorSignatureName) {
-    drawCentered(page, data.supervisorSignatureName, sy + 2, fonts.regular, 8, BLACK, sx + 14, sx + colW - 14)
+  const supPrinted = toPrintedName(data.supervisorSignatureName)
+  if (supPrinted) {
+    drawCentered(page, supPrinted, sy + 2, fonts.bold, 8, BLACK, sx + 14, sx + colW - 14)
   }
   drawCentered(
     page,

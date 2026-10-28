@@ -345,14 +345,18 @@ export async function withAttendance(
 ): Promise<DtrFormData> {
   const { fillFromAttendance: _flag, ...rest } = data
   if (!shouldFillFromAttendance(data)) return rest
-  const stored =
-    rest.employeeId && sql
-      ? await punchesForEmployee(sql, rest.employeeId, rest.periodFrom, rest.periodTo)
-      : []
-  if (rest.employeeId && sql && (!rest.employeeName || !rest.position)) {
-    const employee = await getEmployee(sql, rest.employeeId)
-    if (employee?.name && !rest.employeeName) rest.employeeName = employee.name
-    if (employee?.position && !rest.position) rest.position = employee.position
+  let stored: AttendancePunch[] = []
+  if (rest.employeeId && sql) {
+    try {
+      stored = await punchesForEmployee(sql, rest.employeeId, rest.periodFrom, rest.periodTo)
+      if (!rest.employeeName || !rest.position) {
+        const employee = await getEmployee(sql, rest.employeeId)
+        if (employee?.name && !rest.employeeName) rest.employeeName = employee.name
+        if (employee?.position && !rest.position) rest.position = employee.position
+      }
+    } catch (error) {
+      console.warn('Attendance lookup failed; generating DTR without punches', error)
+    }
   }
   return applyAttendanceToDtr(rest, [...stored, ...extraPunches])
 }

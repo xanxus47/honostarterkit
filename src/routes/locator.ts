@@ -308,16 +308,16 @@ function formPage(): string {
       <fieldset>
         <legend>6. Employee Certification</legend>
         <div class="grid">
-          <label>Signature over Printed Name <input name="employeeSignatureName" /></label>
+          <label>Signature over Printed Name <input name="employeeSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Date <input name="employeeSignatureDate" placeholder="YYYY-MM-DD" /></label>
         </div>
       </fieldset>
       <fieldset>
         <legend>7. Approval</legend>
         <div class="grid">
-          <label>Immediate Supervisor <input name="supervisorSignatureName" /></label>
+          <label>Immediate Supervisor <input name="supervisorSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Supervisor Date <input name="supervisorDate" /></label>
-          <label>Department Head <input name="departmentHeadSignatureName" /></label>
+          <label>Department Head <input name="departmentHeadSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Department Head Date <input name="departmentHeadDate" /></label>
         </div>
       </fieldset>
@@ -346,7 +346,7 @@ function formPage(): string {
         </div>
         <label style="margin-top:10px">Remarks / Summary of Activity <textarea name="remarksSummary"></textarea></label>
         <div class="grid" style="margin-top:10px">
-          <label>Employee Acknowledgment Name <input name="ackSignatureName" /></label>
+          <label>Employee Acknowledgment Name <input name="ackSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Acknowledgment Date <input name="ackDate" /></label>
           <label>Certified By (Official on Duty) <input name="certifiedByName" /></label>
           <label>Certified Position <input name="certifiedByPosition" /></label>

@@ -226,7 +226,7 @@ function formPage(): string {
       <fieldset>
         <legend>4. Employee Certification</legend>
         <div class="grid">
-          <label>Signature Name <input name="employeeSignatureName" /></label>
+          <label>Signature Name <input name="employeeSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Date <input name="employeeSignatureDate" /></label>
         </div>
       </fieldset>
@@ -248,8 +248,8 @@ function formPage(): string {
               <option value="disapproved">Disapproved</option>
             </select>
           </label>
-          <label>Supervisor Printed Name <input name="supervisorPrintedName" /></label>
-          <label>Dept Head Printed Name <input name="deptHeadPrintedName" /></label>
+          <label>Supervisor Printed Name <input name="supervisorPrintedName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
+          <label>Dept Head Printed Name <input name="deptHeadPrintedName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Supervisor Position <input name="supervisorPosition" /></label>
           <label>Dept Head Date <input name="deptHeadDate" /></label>
           <label>Supervisor Date <input name="supervisorDate" /></label>

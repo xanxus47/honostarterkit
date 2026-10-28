@@ -9,7 +9,8 @@ import {
 } from 'pdf-lib'
 import { encodeCode128B } from '../otaf/barcode'
 import { isAutoLateRemark, isLateAmClockIn, isLatePmClockIn } from './from-attendance'
-import type { DtrDayEntry, DtrFormData, EmploymentStatus } from './types'
+import { toBlockLetters } from '../printed-name'
+import { toSignaturePrintedName, type DtrDayEntry, type DtrFormData, type EmploymentStatus } from './types'
 
 const PAGE_W = 595
 const PAGE_H = 842
@@ -322,9 +323,9 @@ function drawEmployeeInfo(page: PDFPage, fonts: Fonts, data: DtrFormData, topY: 
 
   const colW = w / 2
   const rows: [string, string | undefined, string, string | undefined | EmploymentStatus][] = [
-    ['Employee Name:', data.employeeName, 'Employee ID:', data.employeeId],
-    ['Position:', data.position, 'Office / Department:', data.officeDepartment],
-    ['Employment Status:', data.employmentStatus, 'Payroll Group:', data.payrollGroup],
+    ['Employee Name:', toBlockLetters(data.employeeName), 'Employee ID:', data.employeeId],
+    ['Position:', toBlockLetters(data.position), 'Office / Department:', toBlockLetters(data.officeDepartment)],
+    ['Employment Status:', data.employmentStatus, 'Payroll Group:', toBlockLetters(data.payrollGroup)],
   ]
 
   for (let r = 0; r < 3; r++) {
@@ -927,14 +928,15 @@ function drawApprovalBox(
   const sigLineW = width - 56
   const sigLineY = topY - 40
   drawUnderline(page, sigLineX, sigLineY, sigLineW)
-  if (name) {
+  const printedName = toSignaturePrintedName(name)
+  if (printedName) {
     const size = 7
-    const nw = fonts.regular.widthOfTextAtSize(name, size)
-    page.drawText(name, {
+    const nw = fonts.bold.widthOfTextAtSize(printedName, size)
+    page.drawText(printedName, {
       x: sigLineX + (sigLineW - nw) / 2,
       y: sigLineY + 2,
       size,
-      font: fonts.regular,
+      font: fonts.bold,
       color: BLACK,
     })
   }

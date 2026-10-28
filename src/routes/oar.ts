@@ -242,9 +242,9 @@ function formPage(): string {
       <fieldset>
         <legend>5–6. Certifications</legend>
         <div class="grid">
-          <label>Employee Signature Name <input name="employeeSignatureName" /></label>
+          <label>Employee Signature Name <input name="employeeSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Employee Signature Date <input name="employeeSignatureDate" /></label>
-          <label>Supervisor Signature Name <input name="supervisorSignatureName" /></label>
+          <label>Supervisor Signature Name <input name="supervisorSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Supervisor Position <input name="supervisorPosition" /></label>
           <label>Supervisor Signature Date <input name="supervisorSignatureDate" /></label>
         </div>

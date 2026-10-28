@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import { encodeCode128B } from '../otaf/barcode'
 import { drawClipboardIcon } from '../otaf/icons'
 import type { OtcFormData } from './types'
@@ -637,14 +638,15 @@ function drawCertifications(
     const sigLineW = 200
     const sigLineX = x + (sigColW - sigLineW) / 2
     drawUnderline(page, sigLineX, sigY, sigLineW)
-    if (block.name) {
+    const printedName = toPrintedName(block.name)
+    if (printedName) {
       const nameSize = 8
-      const nameW = fonts.regular.widthOfTextAtSize(block.name, nameSize)
-      page.drawText(block.name, {
+      const nameW = fonts.bold.widthOfTextAtSize(printedName, nameSize)
+      page.drawText(printedName, {
         x: sigLineX + (sigLineW - nameW) / 2,
         y: sigY + 3,
         size: nameSize,
-        font: fonts.regular,
+        font: fonts.bold,
         color: BLACK,
       })
     }

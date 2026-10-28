@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import type { AcrFormData } from './types'
 
 const PAGE_W = 595
@@ -175,14 +176,17 @@ function drawSigCaption(
   lineW: number,
 ) {
   drawUnderline(page, x, lineY, lineW)
-  if (name) {
+  const isPrintedName = /name|signature/i.test(caption) && !/date/i.test(caption)
+  const printed = isPrintedName ? toPrintedName(name) : name
+  if (printed) {
     const size = 6
-    const nw = fonts.regular.widthOfTextAtSize(name, size)
-    page.drawText(name, {
+    const font = isPrintedName ? fonts.bold : fonts.regular
+    const nw = font.widthOfTextAtSize(printed, size)
+    page.drawText(printed, {
       x: x + (lineW - nw) / 2,
       y: lineY + 1.5,
       size,
-      font: fonts.regular,
+      font,
       color: BLACK,
     })
   }
@@ -742,7 +746,7 @@ function drawSupervisorAndHrmo(
   hy -= 11
   labeledValue(page, fonts, 'Position:', data.hrmoPosition, xR + 4, hy, lineW + 16, 5, 5.5)
   hy -= 11
-  labeledValue(page, fonts, 'Signature:', data.hrmoSignatureName, xR + 4, hy, 90, 5, 5.5)
+  labeledValue(page, fonts, 'Signature:', toPrintedName(data.hrmoSignatureName), xR + 4, hy, 90, 5, 5.5)
   labeledValue(page, fonts, 'Date:', data.hrmoDate, xR + rightW * 0.55, hy, 70, 5, 5.5)
 
   return bodyBottom
@@ -802,7 +806,7 @@ function drawApprovalAndSystem(
   labeledValue(page, fonts, 'Authorized Approving Officer:', data.approverName, xL + 4, y, 70, 4.6, 5)
   y -= 9
   labeledValue(page, fonts, 'Position:', data.approverPosition, xL + 4, y, 50, 4.6, 5)
-  labeledValue(page, fonts, 'Signature:', data.approverSignatureName, xL + leftW * 0.42, y, 45, 4.6, 5)
+  labeledValue(page, fonts, 'Signature:', toPrintedName(data.approverSignatureName), xL + leftW * 0.42, y, 45, 4.6, 5)
   labeledValue(page, fonts, 'Date:', data.approverDate, xL + leftW * 0.78, y, 35, 4.6, 5)
 
   // System update

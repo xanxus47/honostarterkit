@@ -1,4 +1,4 @@
-import type { DtrFormData, DtrRecord } from './types'
+import { withUppercaseSignatureNames, type DtrFormData, type DtrRecord } from './types'
 
 /** In-memory store for local/dev. Replace with D1/KV/Neon for production. */
 const records = new Map<string, DtrRecord>()
@@ -25,6 +25,7 @@ export function getDtr(id: string): DtrRecord | undefined {
 export function createDtr(data: DtrFormData): DtrRecord {
   const id = crypto.randomUUID()
   const ts = nowIso()
+  data = withUppercaseSignatureNames(data)
   const record: DtrRecord = {
     ...data,
     id,
@@ -44,7 +45,7 @@ export function updateDtr(id: string, data: DtrFormData): DtrRecord | undefined 
     if (value !== undefined) merged[key] = value as never
   }
   const record: DtrRecord = {
-    ...merged,
+    ...withUppercaseSignatureNames(merged),
     id: existing.id,
     controlNumber: merged.controlNumber?.trim() || existing.controlNumber,
     createdAt: existing.createdAt,

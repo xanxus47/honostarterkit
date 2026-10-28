@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import { encodeCode128B } from '../otaf/barcode'
 import { drawClipboardIcon } from '../otaf/icons'
 import type { OafFormData } from './types'
@@ -519,13 +520,14 @@ function drawApprovals(page: PDFPage, fonts: Fonts, data: OafFormData, topY: num
 
     const sigY = y - bodyH + 28
     drawUnderline(page, cx + 8, sigY, colW - 16)
-    if (cols[i]!.name) {
-      const nw = fonts.regular.widthOfTextAtSize(cols[i]!.name!, 7)
-      page.drawText(cols[i]!.name!, {
+    const printedName = toPrintedName(cols[i]!.name)
+    if (printedName) {
+      const nw = fonts.bold.widthOfTextAtSize(printedName, 7)
+      page.drawText(printedName, {
         x: cx + 8 + Math.max(0, (colW - 16 - nw) / 2),
         y: sigY + 2,
         size: 7,
-        font: fonts.regular,
+        font: fonts.bold,
         color: BLACK,
       })
     }

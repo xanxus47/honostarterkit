@@ -7,6 +7,7 @@ import {
   type PDFPage,
   type RGB,
 } from 'pdf-lib'
+import { toPrintedName } from '../printed-name'
 import { encodeCode128B } from '../otaf/barcode'
 import type { ApprovalDecision, CtoFormData } from './types'
 
@@ -549,7 +550,7 @@ function drawEmployeeCertification(
   drawCenteredOnLine(
     page,
     fonts,
-    data.employeeSignatureName,
+    toPrintedName(data.employeeSignatureName),
     'Signature over Printed Name',
     undefined,
     x + (half - 180) / 2,
@@ -673,18 +674,19 @@ function drawApprovalBox(
   const sigY = topY - bodyH + (showPosition ? 48 : 38)
   const lineW = width - 40
   const lineX = x + 20
-  drawCenteredOnLine(page, fonts, signatureName, 'Signature', undefined, lineX, sigY, lineW)
+  drawCenteredOnLine(page, fonts, toPrintedName(signatureName), 'Signature', undefined, lineX, sigY, lineW)
 
   let py = sigY - 22
   page.drawText('Printed Name:', { x: x + 10, y: py, size: 6.5, font: fonts.regular, color: BLACK })
   const pnLabelW = fonts.regular.widthOfTextAtSize('Printed Name:', 6.5)
   drawUnderline(page, x + 10 + pnLabelW + 3, py - 1, width - 24 - pnLabelW)
-  if (printedName) {
-    page.drawText(printedName, {
+  const capsPrinted = toPrintedName(printedName)
+  if (capsPrinted) {
+    page.drawText(capsPrinted, {
       x: x + 10 + pnLabelW + 5,
       y: py + 1,
       size: 7,
-      font: fonts.regular,
+      font: fonts.bold,
       color: BLACK,
     })
   }

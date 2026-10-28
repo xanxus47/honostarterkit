@@ -1,3 +1,5 @@
+import { toBlockLetters, toPrintedName } from '../printed-name'
+
 export type EmploymentStatus = 'permanent' | 'jobOrder' | 'contractOfService'
 
 export type DtrDayEntry = {
@@ -55,6 +57,33 @@ export type DtrFormData = {
 
   hrmoSignatureName?: string
   hrmoDate?: string
+}
+
+export const DTR_SIGNATURE_NAME_KEYS = [
+  'employeeSignatureName',
+  'supervisorSignatureName',
+  'departmentHeadSignatureName',
+  'hrmoSignatureName',
+] as const
+
+export const DTR_BLOCK_LETTER_KEYS = [
+  'employeeName',
+  'position',
+  'officeDepartment',
+  'payrollGroup',
+] as const
+
+export const toSignaturePrintedName = toPrintedName
+
+export function withUppercaseSignatureNames<T extends DtrFormData>(data: T): T {
+  const next = { ...data }
+  for (const key of DTR_BLOCK_LETTER_KEYS) {
+    if (next[key] !== undefined) next[key] = toBlockLetters(next[key])
+  }
+  for (const key of DTR_SIGNATURE_NAME_KEYS) {
+    if (next[key] !== undefined) next[key] = toPrintedName(next[key])
+  }
+  return next
 }
 
 export type DtrRecord = DtrFormData & {

@@ -341,7 +341,7 @@ function formPage(): string {
         </div>
         <label style="margin-top:10px">Explanation <textarea name="explanation"></textarea></label>
         <div class="grid" style="margin-top:10px">
-          <label>Employee Signature over Printed Name <input name="employeeSignatureName" /></label>
+          <label>Employee Signature over Printed Name <input name="employeeSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
         </div>
       </fieldset>
 
@@ -379,7 +379,7 @@ function formPage(): string {
         </div>
         <label style="margin-top:10px">Supervisor Remarks <textarea name="supervisorRemarks"></textarea></label>
         <div class="grid" style="margin-top:10px">
-          <label>Signature over Printed Name <input name="supervisorSignatureName" /></label>
+          <label>Signature over Printed Name <input name="supervisorSignatureName" style="text-transform:uppercase" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Position <input name="supervisorPosition" /></label>
           <label>Date <input name="supervisorDate" placeholder="YYYY-MM-DD" /></label>
         </div>

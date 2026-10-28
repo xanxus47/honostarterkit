@@ -5,7 +5,15 @@ import { isAutoLateRemark, parsePunchPayload, withAttendance } from '../lib/dtr/
 import { generateDtrPdf } from '../lib/dtr/generate-dtr'
 import { addPunches, listPunches } from '../lib/dtr/punch-store'
 import { createDtr, deleteDtr, getDtr, listDtr, updateDtr } from '../lib/dtr/store'
-import type { DtrDayEntry, DtrFormData, EmploymentStatus } from '../lib/dtr/types'
+import { toBlockLetters } from '../lib/printed-name'
+import {
+  DTR_BLOCK_LETTER_KEYS,
+  DTR_SIGNATURE_NAME_KEYS,
+  toSignaturePrintedName,
+  type DtrDayEntry,
+  type DtrFormData,
+  type EmploymentStatus,
+} from '../lib/dtr/types'
 
 const dtr = new Hono<{ Bindings: AppBindings }>()
 
@@ -104,6 +112,13 @@ function parseDtrData(
     data[key] = get(key)
   }
 
+  for (const key of DTR_BLOCK_LETTER_KEYS) {
+    if (data[key] !== undefined) data[key] = toBlockLetters(data[key])
+  }
+  for (const key of DTR_SIGNATURE_NAME_KEYS) {
+    if (data[key] !== undefined) data[key] = toSignaturePrintedName(data[key])
+  }
+
   if (!(source instanceof FormData || source instanceof URLSearchParams)) {
     if (!sparse || Object.prototype.hasOwnProperty.call(source, 'days')) {
       data.days = parseDays(source.days)
@@ -131,7 +146,13 @@ async function readBody(c: DtrContext, opts?: { sparse?: boolean }): Promise<Dtr
     const raw = (await c.req.json()) as Record<string, unknown>
     data = parseDtrData(raw, opts)
     inline = parsePunchPayload(raw.punches ?? [])
-    if (inline.length && sql) await addPunches(sql, inline)
+    if (inline.length && sql) {
+      try {
+        await addPunches(sql, inline)
+      } catch (error) {
+        console.warn('Could not store inline punches', error)
+      }
+    }
   } else if (
     contentType.includes('application/x-www-form-urlencoded') ||
     contentType.includes('multipart/form-data')
@@ -193,6 +214,7 @@ function formPage(): string {
     input, select {
       font: inherit; font-weight: 400; border: 1px solid #c5d2e3; padding: 8px 10px; background: #fff;
     }
+    input.printed-name { text-transform: uppercase; }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
     button {
       border: 0; background: var(--navy); color: #fff; padding: 11px 18px;
@@ -236,10 +258,10 @@ function formPage(): string {
       <fieldset>
         <legend>1. Employee Information</legend>
         <div class="grid">
-          <label>Employee Name <input name="employeeName" required /></label>
+          <label>Employee Name <input class="printed-name" name="employeeName" required autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" /></label>
           <label>Employee ID <input name="employeeId" /></label>
-          <label>Position <input name="position" /></label>
-          <label>Office / Department <input name="officeDepartment" /></label>
+          <label>Position <input class="printed-name" name="position" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" /></label>
+          <label>Office / Department <input class="printed-name" name="officeDepartment" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" /></label>
           <label>Employment Status
             <select name="employmentStatus">
               <option value="">—</option>
@@ -248,7 +270,7 @@ function formPage(): string {
               <option value="contractOfService">Contract of Service</option>
             </select>
           </label>
-          <label>Payroll Group <input name="payrollGroup" /></label>
+          <label>Payroll Group <input class="printed-name" name="payrollGroup" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" /></label>
         </div>
       </fieldset>
 
@@ -279,15 +301,15 @@ function formPage(): string {
       <fieldset>
         <legend>Signatures</legend>
         <div class="grid">
-          <label>Employee Signature Name <input name="employeeSignatureName" /></label>
+          <label>Employee Signature Name <input class="printed-name" name="employeeSignatureName" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Employee Date <input name="employeeSignatureDate" placeholder="YYYY-MM-DD" /></label>
-          <label>Immediate Supervisor Name <input name="supervisorSignatureName" /></label>
+          <label>Immediate Supervisor Name <input class="printed-name" name="supervisorSignatureName" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Immediate Supervisor Position <input name="supervisorPosition" /></label>
           <label>Immediate Supervisor Date <input name="supervisorDate" placeholder="YYYY-MM-DD" /></label>
-          <label>Department Head Name <input name="departmentHeadSignatureName" /></label>
+          <label>Department Head Name <input class="printed-name" name="departmentHeadSignatureName" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>Department Head Position <input name="departmentHeadPosition" /></label>
           <label>Department Head Date <input name="departmentHeadDate" placeholder="YYYY-MM-DD" /></label>
-          <label>HRMO Name <input name="hrmoSignatureName" /></label>
+          <label>HRMO Name <input class="printed-name" name="hrmoSignatureName" autocapitalize="characters" oninput="this.value=this.value.toUpperCase().replace(/[^A-ZÑ\\s.'-]/g,'')" /></label>
           <label>HRMO Date <input name="hrmoDate" placeholder="YYYY-MM-DD" /></label>
         </div>
       </fieldset>
